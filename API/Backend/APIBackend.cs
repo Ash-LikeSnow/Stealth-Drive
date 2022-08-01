@@ -36,7 +36,7 @@ namespace StealthSystem
             ModApiMethods = new Dictionary<string, Delegate>
             {
                 ["ToggleStealth"] = new Func<IMyTerminalBlock, bool, bool>(ToggleStealth),
-                ["GetStatus"] = new Func<IMyTerminalBlock, uint>(GetStatus),
+                ["GetStatus"] = new Func<IMyTerminalBlock, int>(GetStatus),
             };
         }
 
@@ -46,7 +46,7 @@ namespace StealthSystem
             PbApiMethods = new Dictionary<string, Delegate>
             {
                 ["ToggleStealth"] = new Func<IMyTerminalBlock, bool>(ToggleStealthPB),
-                ["GetStatus"] = new Func<IMyTerminalBlock, uint>(GetStatus),
+                ["GetStatus"] = new Func<IMyTerminalBlock, int>(GetStatus),
             };
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("StealthPbAPI");
             pb.Getter = b => PbApiMethods;
@@ -68,13 +68,13 @@ namespace StealthSystem
             return ToggleStealth(block, false);
         }
 
-        private uint GetStatus(IMyTerminalBlock block)
+        private int GetStatus(IMyTerminalBlock block)
         {
             DriveComp comp;
             if (!_session.DriveMap.TryGetValue(block.EntityId, out comp))
-                return 3u;
+                return 3;
 
-            var status = !comp.Online ? 4u : !comp.SufficientPower ? 3u : comp.CoolingDown ? 2u : comp.StealthActive ? 1u : 0u;
+            var status = !comp.Online ? 4 : !comp.SufficientPower ? 3 : comp.CoolingDown ? 2 : comp.StealthActive ? 1 : 0;
             return status;
         }
 

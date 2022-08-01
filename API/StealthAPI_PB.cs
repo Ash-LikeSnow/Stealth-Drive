@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
-using VRage;
-using VRage.Game;
-using VRageMath;
 
 namespace StealthSystem
 {
@@ -14,13 +10,13 @@ namespace StealthSystem
         public bool ToggleStealth(Sandbox.ModAPI.Ingame.IMyTerminalBlock drive) => _toggleStealth?.Invoke(drive) ?? false;
 
         /// Returns status of drive. 0 = Ready, 1 = Active, 2 = Cooldown, 3 = Not enough power, 4 = Offline
-        public uint GetStatus(Sandbox.ModAPI.Ingame.IMyTerminalBlock drive) => _getStatus?.Invoke(drive) ?? 4u;
+        public int GetStatus(Sandbox.ModAPI.Ingame.IMyTerminalBlock drive) => _getStatus?.Invoke(drive) ?? 4;
 
 
 
 
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool> _toggleStealth;
-        private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, uint> _getStatus;
+        private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int> _getStatus;
 
         public bool Activate(Sandbox.ModAPI.Ingame.IMyTerminalBlock pbBlock)
         {
