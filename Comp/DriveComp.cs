@@ -67,6 +67,7 @@ namespace StealthSystem
         internal bool CdOnInit;
         internal bool Transfer;
         internal bool ShieldWaiting;
+        internal bool IgnorePower;
 
         internal int Fade;
         internal int ShieldWait;
@@ -80,12 +81,16 @@ namespace StealthSystem
         internal long SignalDistance;
         internal long SignalDistanceSquared;
 
+        private readonly StealthSession _session;
+
         private List<MyEntity> _entities;
         private BoundingSphereD _sphere;
         private readonly Vector3D[] _obbCorners = new Vector3D[8];
 
-        internal DriveComp(IMyFunctionalBlock stealthBlock)
+        internal DriveComp(IMyFunctionalBlock stealthBlock, StealthSession session)
         {
+            _session = session;
+
             Block = stealthBlock;
 
             if (!StealthSession.WcActive)
@@ -178,7 +183,7 @@ namespace StealthSystem
             if (IsPrimary)
                 TransferPrimary(true);
             
-            StealthSession.DriveMap.Remove(Block.EntityId);
+            _session.DriveMap.Remove(Block.EntityId);
 
             var gridData = StealthSession.GridMap[Grid];
             gridData.StealthComps.Remove(this);
@@ -631,6 +636,18 @@ namespace StealthSystem
         internal void OnEnabledChanged(IMyTerminalBlock block)
         {
             (block as IMyFunctionalBlock).Enabled = false;
+        }
+
+        internal bool ToggleStealth(bool force = false)
+        {
+            if (!Online || !StealthActive && !force && (!SufficientPower || CoolingDown)) return false;
+
+            EnterStealth = !StealthActive;
+            ExitStealth = StealthActive;
+
+            IgnorePower = force && EnterStealth;
+
+            return true;
         }
 
         internal void SwitchStealth(bool stealth, bool fade = false)

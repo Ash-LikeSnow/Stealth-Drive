@@ -231,10 +231,7 @@ namespace StealthSystem
         internal void SwitchStealth(IMyTerminalBlock block)
         {
             var comp = DriveMap[block.EntityId];
-            if (!comp.Online || !comp.StealthActive && (!comp.SufficientPower || comp.CoolingDown)) return;
-
-            comp.EnterStealth = !comp.StealthActive;
-            comp.ExitStealth = comp.StealthActive;
+            comp.ToggleStealth();
 
             foreach (var control in _customControls)
                 control.UpdateVisual();

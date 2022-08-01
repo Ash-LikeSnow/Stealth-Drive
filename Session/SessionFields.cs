@@ -74,16 +74,19 @@ namespace StealthSystem
         internal static bool DisableShields;
         internal static bool DisableWeapons;
 
-        internal static Dictionary<long, DriveComp> DriveMap;
+        internal Dictionary<long, DriveComp> DriveMap;
         internal static Dictionary<IMyCubeGrid, GridComp> GridMap;
         internal static Dictionary<IMyGridGroupData, GroupMap> GridGroupMap;
         internal static List<GridComp> GridList;
         internal static HashSet<IMyCubeGrid> StealthedGrids;
 
         internal Settings ConfigSettings;
+        internal APIBackend API;
+        internal APIServer APIServer;
 
         internal object InitObj = new object();
         internal bool Inited;
+        internal bool PbApiInited;
 
         private List<MyEntity> _entities;
         private ConcurrentCachingList<IMyUpgradeModule> _startBlocks;
@@ -95,5 +98,11 @@ namespace StealthSystem
         private readonly Vector3D _small = new Vector3D(1.125, 6.25, 1.125);
 
         private int _duration;
+
+        public StealthSession()
+        {
+            API = new APIBackend(this);
+            APIServer = new APIServer(this);
+        }
     }
 }

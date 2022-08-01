@@ -75,8 +75,12 @@ namespace StealthSystem
         internal bool DisableWeapons;
         internal int DamageTaken;
 
-        internal void Init(IMyCubeGrid grid)
+        private StealthSession _session;
+
+        internal void Init(IMyCubeGrid grid, StealthSession session)
         {
+            _session = session;
+
             Grid = grid;
 
             Grid.OnBlockAdded += BlockAdded;
@@ -123,13 +127,13 @@ namespace StealthSystem
                 var module = fat as IMyUpgradeModule;
                 if (StealthSession.STEALTH_BLOCKS.Contains(module.BlockDefinition.SubtypeName))
                 {
-                    if (!StealthSession.DriveMap.ContainsKey(module.EntityId))
+                    if (!_session.DriveMap.ContainsKey(module.EntityId))
                     {
                         Logs.WriteLine("BlockAdded() - Drive not in map!");
                         return;
                     }
 
-                    var dComp = StealthSession.DriveMap[module.EntityId];
+                    var dComp = _session.DriveMap[module.EntityId];
 
                     if (!dComp.Inited)
                     {

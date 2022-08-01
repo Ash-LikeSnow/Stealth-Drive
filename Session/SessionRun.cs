@@ -85,6 +85,7 @@ namespace StealthSystem
 
             ConfigSettings = new Settings();
 
+            APIServer.Load();
         }
 
         public override void UpdateAfterSimulation()
@@ -127,6 +128,7 @@ namespace StealthSystem
             MyAPIGateway.TerminalControls.CustomActionGetter -= CustomActionGetter;
 
             Logs.Close();
+            APIServer.Unload();
 
             _groupMapPool.Clear();
             _gridCompPool.Clear();

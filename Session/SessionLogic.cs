@@ -56,18 +56,6 @@ namespace StealthSystem
                     {
                         var comp = gridComp.StealthComps[j];
 
-                        //if (comp.Age < 2)
-                        //{
-                        //    comp.Age++;
-                        //    continue;
-                        //}
-
-                        //if (!comp.Inited)
-                        //{
-                        //    MyLog.Default.WriteLine("Try Init on loop");
-                        //    comp.Init2();
-                        //}
-
                         if (comp.Grid != comp.Block.CubeGrid)
                         {
                             if (!GridMap.ContainsKey(comp.Block.CubeGrid))
@@ -103,70 +91,10 @@ namespace StealthSystem
                             }
                         }
 
-                        //Hide/unhide main grid after delay to match slimblock transparency update
-                        //if (comp.DelayedRender)
-                        //{
-                        //    if (comp.Delay-- == 0)
-                        //    {
-                        //        foreach (var grid in comp.ConnectedGrids)
-                        //            comp.DitherFatBlocks(!comp.VisibleToClient);
-                                    
-                        //        comp.DelayedRender = false;
-                        //    }
-                        //}
-
-                        if (!comp.IsPrimary)
-                            continue;
-
-                        if (comp != master && (master == null || !master.Online))
-                        {
-                            Logs.WriteLine($"[StealthMod] Primary != master - master null: {master == null}");
-                            master = comp;
-                        }
-
-                        if (!comp.Block.IsFunctional && (!comp.TransferFailed || Tick120))
-                            comp.TransferFailed = !comp.TransferPrimary(false);
-
-                        //Calculate grid surface area and drive power
-                        if (gridComp.GroupsDirty || Tick60 && comp.GridUpdated)
-                        {
-                            comp.CalculatePowerRequirements();
-                            gridComp.GroupsDirty = false;
-                            comp.GridUpdated = false;
-                        }
-
-                        //Decrease remaining stealth duration after jump
-                        if (Tick120 && comp.StealthActive)
-                        {
-                            var jumpList = new List<IMyJumpDrive>(comp.JumpDrives.Keys);
-                            foreach (var jump in jumpList)
-                            {
-                                if (jump.CurrentStoredPower < comp.JumpDrives[jump])
-                                    comp.RemainingDuration -= JumpPenalty;
-
-                                comp.JumpDrives[jump] = jump.CurrentStoredPower;
-                            }
-                        }
-
-                        //Update comp state and refresh custom info
-                        if (Tick20 || comp.PowerDirty)
-                        {
-                            comp.UpdateStatus();
-                            if (!IsDedicated && LastTerminal == comp.Block && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
-                                comp.RefreshTerminal();
-                        }
-
-                        //Exit stealth conditions
-                        if (comp.StealthActive && (!comp.IsPrimary || !comp.Online || !comp.SufficientPower || comp.RemainingDuration-- <= 0 ||
-                            gridComp.Revealed || gridComp.DamageTaken > DamageThreshold))
-                        {
-                            comp.ExitStealth = true;
-                        }
-
                         //Update cooldown and heat signal
                         if (comp.CoolingDown)
                         {
-                            if (comp.RemainingDuration-- <= 0)
+                            if (comp.RemainingDuration-- <= 0 || comp.EnterStealth)
                             {
                                 if (!IsDedicated && comp.HeatSignature != null)
                                 {
@@ -191,31 +119,93 @@ namespace StealthSystem
                             }
                         }
 
-                        //Vanilla fuckery
-                        if (!WcActive && comp.StealthActive)
+                        //Hide/unhide main grid after delay to match slimblock transparency update
+                        //if (comp.DelayedRender)
+                        //{
+                        //    if (comp.Delay-- == 0)
+                        //    {
+                        //        foreach (var grid in comp.ConnectedGrids)
+                        //            comp.DitherFatBlocks(!comp.VisibleToClient);
+
+                        //        comp.DelayedRender = false;
+                        //    }
+                        //}
+
+                        if (!comp.IsPrimary && !comp.StealthActive)
+                            continue;
+
+                        if (comp != master && (master == null || !master.Online))
                         {
-                            if (TickMod60 == comp.CompTick60)
-                                comp.GetNearbyTurrets();
+                            Logs.WriteLine($"[StealthMod] Primary != master - master null: {master == null}");
+                            master = comp;
+                        }
 
-                            for (int k = 0; k < comp.NearbyTurrets.Count; k++)
+                        if (!comp.Block.IsFunctional && (!comp.TransferFailed || Tick120))
+                            comp.TransferFailed = !comp.TransferPrimary(false);
+
+                        //Calculate grid surface area and drive power
+                        if (gridComp.GroupsDirty || Tick60 && comp.GridUpdated)
+                        {
+                            comp.CalculatePowerRequirements();
+                            gridComp.GroupsDirty = false;
+                            comp.GridUpdated = false;
+                        }
+
+                        //Update comp state and refresh custom info
+                        if (Tick20 || comp.PowerDirty)
+                        {
+                            comp.UpdateStatus();
+                            if (!IsDedicated && LastTerminal == comp.Block && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
+                                comp.RefreshTerminal();
+                        }
+
+                        if (comp.StealthActive)
+                        {
+                            //Exit stealth conditions
+                            var forcedExit = !comp.IsPrimary || !comp.Online || gridComp.Revealed || gridComp.DamageTaken > DamageThreshold;
+                            if (forcedExit || !comp.IgnorePower && (!comp.SufficientPower || comp.RemainingDuration-- <= 0))
+                                comp.ExitStealth = true;
+
+                            //Decrease remaining stealth duration after jump
+                            if (Tick120)
                             {
-                                var turret = comp.NearbyTurrets[k];
-
-                                if (!turret.HasTarget) continue;
-
-                                var target = turret.Target;
-
-                                var block = target as IMyCubeBlock;
-                                if (block != null && ((uint)block.CubeGrid.Flags & 0x1000000) > 0)
+                                var jumpList = new List<IMyJumpDrive>(comp.JumpDrives.Keys);
+                                foreach (var jump in jumpList)
                                 {
-                                    turret.ResetTargetingToDefault();
-                                    continue;
-                                }
+                                    if (jump.CurrentStoredPower < comp.JumpDrives[jump])
+                                        comp.RemainingDuration -= JumpPenalty;
 
-                                if (((uint)target.Flags & 0x1000000) > 0)
-                                    turret.ResetTargetingToDefault();
+                                    comp.JumpDrives[jump] = jump.CurrentStoredPower;
+                                }
+                            }
+
+                            //Vanilla fuckery
+                            if (!WcActive)
+                            {
+                                if (TickMod60 == comp.CompTick60)
+                                    comp.GetNearbyTurrets();
+
+                                for (int k = 0; k < comp.NearbyTurrets.Count; k++)
+                                {
+                                    var turret = comp.NearbyTurrets[k];
+
+                                    if (!turret.HasTarget) continue;
+
+                                    var target = turret.Target;
+
+                                    var block = target as IMyCubeBlock;
+                                    if (block != null && ((uint)block.CubeGrid.Flags & 0x1000000) > 0)
+                                    {
+                                        turret.ResetTargetingToDefault();
+                                        continue;
+                                    }
+
+                                    if (((uint)target.Flags & 0x1000000) > 0)
+                                        turret.ResetTargetingToDefault();
+                                }
                             }
                         }
+
 
                         //if (comp.ExpandedOBB != null) DrawBox(comp.ExpandedOBB, Color.AliceBlue);
 
@@ -235,7 +225,7 @@ namespace StealthSystem
                             {
                                 comp.EnterStealth = false;
                                 comp.UpdateStatus();
-                                if (!comp.Online || !comp.SufficientPower)
+                                if (!comp.Online || !comp.IgnorePower && !comp.SufficientPower)
                                     continue;
 
                                 enter = true;
@@ -276,6 +266,7 @@ namespace StealthSystem
 
                                 comp.ExitStealth = false;
                                 comp.StealthActive = false;
+                                comp.IgnorePower = false;
 
                                 comp.CoolingDown = true;
                                 comp.RemainingDuration = comp.MaxDuration - comp.RemainingDuration;
@@ -519,7 +510,7 @@ namespace StealthSystem
                             continue;
 
                         var gridComp = _gridCompPool.Count > 0 ? _gridCompPool.Pop() : new GridComp();
-                        gridComp.Init(grid);
+                        gridComp.Init(grid, this);
 
                         GridList.Add(gridComp);
                         GridMap[grid] = gridComp;
@@ -548,7 +539,7 @@ namespace StealthSystem
                     {
                         if (DriveMap.ContainsKey(module.EntityId)) continue;
 
-                        var comp = new DriveComp(module);
+                        var comp = new DriveComp(module, this);
                         DriveMap[module.EntityId] = comp;
                         gridData.StealthComps.Add(comp);
                         comp.Init();

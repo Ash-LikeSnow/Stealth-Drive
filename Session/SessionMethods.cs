@@ -45,6 +45,9 @@ namespace StealthSystem
 
                     (upgrade as MyCubeBlock).AddedToScene += AddToStart => _startBlocks.Add(upgrade);
                 }
+
+                if (!PbApiInited && IsServer && entity is IMyProgrammableBlock)
+                    MyAPIGateway.Utilities.InvokeOnGameThread(() => API.PbInit());
             }
             catch (Exception ex)
             {
