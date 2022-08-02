@@ -12,7 +12,7 @@ namespace StealthSystem
     internal class Settings
     {
         internal const string CONFIG_FILE = "StealthMod.cfg";
-        internal const int CONFIG_VERSION = 6;
+        internal const int CONFIG_VERSION = 7;
 
         internal StealthSettings Config;
 
@@ -74,6 +74,7 @@ namespace StealthSystem
             var fade = oldSettings.Version < 4;
             var five = oldSettings.Version < 5;
             var six = oldSettings.Version < 6;
+            var seven = oldSettings.Version < 7;
 
             Config.FadeTime = fade ? 150 : oldSettings.FadeTime;
             Config.ShieldDelay = five ? 300 : oldSettings.ShieldDelay;
@@ -82,6 +83,7 @@ namespace StealthSystem
             Config.DisableShields = five ? true : oldSettings.DisableShields;
             Config.DamageThreshold = oldSettings.DamageThreshold;
             Config.DisableWeapons = six ? true : oldSettings.DisableWeapons;
+            Config.HideThrusterFlames = seven ? true : oldSettings.HideThrusterFlames;
 
             if (Config.DriveConfig == null)
                 Config.DriveConfig = new StealthSettings.DriveSettings();
@@ -167,9 +169,10 @@ namespace StealthSystem
         [ProtoMember(8)] public bool DisableShields = true;
         [ProtoMember(9)] public int DamageThreshold = 1000;
         [ProtoMember(10)] public bool DisableWeapons = true;
+        [ProtoMember(11)] public bool HideThrusterFlames = true;
 
-        [ProtoMember(10)] public DriveSettings DriveConfig;
-        [ProtoMember(11)] public SinkSettings SinkConfig;
+        [ProtoMember(20)] public DriveSettings DriveConfig;
+        [ProtoMember(21)] public SinkSettings SinkConfig;
 
         [ProtoContract]
         public class DriveSettings

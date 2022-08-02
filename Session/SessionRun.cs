@@ -60,7 +60,7 @@ namespace StealthSystem
             ModPath = ModContext.ModPath;
             WcActive = ModCheck();
 
-            RemoveEdges();
+            //RemoveEdges();
             CreateTerminalControls<IMyUpgradeModule>();
 
             MyEntities.OnEntityCreate += OnEntityCreate;

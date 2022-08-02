@@ -74,12 +74,14 @@ namespace StealthSystem
         internal int SurfaceArea;
         internal int MaxDuration;
         internal int RemainingDuration;
-
-        internal float RequiredPower;
         internal long CompTick15;
         internal long CompTick60;
         internal long SignalDistance;
         internal long SignalDistanceSquared;
+
+        internal float RequiredPower;
+        internal float Transparency;
+        internal float TransOffset = -0.35f;
 
         private readonly StealthSession _session;
 
@@ -92,6 +94,8 @@ namespace StealthSystem
             _session = session;
 
             Block = stealthBlock;
+
+            Transparency = -StealthSession.Transparency;
 
             if (!StealthSession.WcActive)
             {
@@ -652,31 +656,60 @@ namespace StealthSystem
 
         internal void SwitchStealth(bool stealth, bool fade = false)
         {
-            var dither = stealth ? StealthSession.Transparency : 0f;
+            if (stealth)
+            {
+                var antiAliasEnabled = (uint)MyAPIGateway.Session?.Config?.AntialiasingMode == 1u;
+                Transparency = antiAliasEnabled ? -StealthSession.Transparency : -1f;
+                TransOffset = antiAliasEnabled ? -0.35f : -0.2f;
+
+                JumpDrives.Clear();
+            }
+
+            var dither = stealth ? Transparency : 0f;
 
             if (fade)
             {
                 var steps = StealthSession.FadeSteps;
                 float fraction = (stealth ? 1 : steps - 1) / (float)steps;
-                dither = fraction * StealthSession.Transparency;
+                dither = TransOffset + fraction * (Transparency - TransOffset);
 
                 FadeEntities.Clear();
                 FadeSlims.Clear();
             }
-            if (stealth) JumpDrives.Clear();
 
-            foreach (var grid in GridComp.GroupMap.ConnectedGrids)//test
+            for (int i = 0; i < GridComp.GroupMap.ConnectedGrids.Count; i++)
             {
+                var grid = GridComp.GroupMap.ConnectedGrids[i];
                 grid.GetBlocks(SlimBlocks);
 
-                foreach (var slim in SlimBlocks)
+                for (int j = 0; j < SlimBlocks.Count; j++)
                 {
+                    var slim = SlimBlocks[j];
                     var fatBlock = slim.FatBlock;
                     if (fatBlock == null)
                     {
                         slim.Dithering = dither;
                         if (fade) FadeSlims.Add(slim);
                         continue;
+                    }
+                    if (fatBlock is MyThrust)
+                    {
+                        var thrust = (MyThrust)fatBlock;
+                        if (stealth)
+                        {
+                            var def = thrust.BlockDefinition;
+                            var flameIdle = def.FlameIdleColor;
+                            var flameFull = def.FlameFullColor;
+
+                            def.FlameIdleColor = Vector4.Zero;
+                            def.FlameFullColor = Vector4.Zero;
+                            thrust.Render.UpdateFlameAnimatorData();
+
+                            def.FlameIdleColor = flameIdle;
+                            def.FlameFullColor = flameFull;
+                        }
+                        else if (!fade)
+                            thrust.Render.UpdateFlameAnimatorData();
                     }
 
                     if (fade) FadeEntities.Add(fatBlock);
@@ -702,8 +735,6 @@ namespace StealthSystem
                     }
                 }
                 SlimBlocks.Clear();
-
-                //(grid as MyCubeGrid).UpdateDirty(null, true);
             }
 
             if (fade)
@@ -753,22 +784,25 @@ namespace StealthSystem
         {
             var steps = StealthSession.FadeSteps;
             var fraction = (fadeOut ? steps - step : step) / (float)steps;
-            var dither = fraction * StealthSession.Transparency;
+            var reset = !fadeOut && step == 0;
+            var dither = reset? 0f : TransOffset + fraction * (Transparency - TransOffset);
+
+            Fading = step != 0;
 
             for (int i = 0; i < FadeSlims.Count; i++)
                 FadeSlims[i].Dithering = dither;
-
-            //for (int i = 0; i < ConnectedGrids.Count; i++)
-            //    (ConnectedGrids[i] as MyCubeGrid).UpdateDirty(null, true);
 
             for (int i = 0; i < FadeEntities.Count; i++)
             {
                 var entity = FadeEntities[i];
                 entity.Render.Transparency = dither;
                 entity.Render.UpdateTransparency();
-            }
 
-            Fading = step != 0;
+                if (!fadeOut && !Fading && entity is MyThrust)
+                    (entity as MyThrust).Render.UpdateFlameAnimatorData();
+            }
+            Grid.Render.UpdateTransparency();
+
         }
 
         internal void StealthExternalGrid(bool stealth, IMyCubeGrid grid)
@@ -776,7 +810,7 @@ namespace StealthSystem
             if (stealth) StealthedExternalGrids.Add(grid);
             else StealthedExternalGrids.Remove(grid);
 
-            var dither = stealth ? StealthSession.Transparency : 0f;
+            var dither = stealth ? Transparency : 0f;
 
             grid.GetBlocks(SlimBlocks);
             foreach (var slim in SlimBlocks)
@@ -805,7 +839,7 @@ namespace StealthSystem
 
         internal void DitherBlock(bool stealth, IMySlimBlock slim)
         {
-            var dither = stealth ? StealthSession.Transparency : 0f;
+            var dither = stealth ? Transparency : 0f;
 
             if (slim.FatBlock == null)
             {
