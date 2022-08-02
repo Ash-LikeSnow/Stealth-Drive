@@ -686,7 +686,7 @@ namespace StealthSystem
                 {
                     var slim = SlimBlocks[j];
                     var fatBlock = slim.FatBlock;
-                    if (fatBlock == null)
+                    if (fatBlock == null || fatBlock is IMyOxygenFarm)
                     {
                         slim.Dithering = dither;
                         if (fade) FadeSlims.Add(slim);
@@ -798,8 +798,12 @@ namespace StealthSystem
                 entity.Render.Transparency = dither;
                 entity.Render.UpdateTransparency();
 
-                if (!fadeOut && !Fading && entity is MyThrust)
-                    (entity as MyThrust).Render.UpdateFlameAnimatorData();
+                if (!Fading) //Final step
+                {
+                    if (!fadeOut && entity is MyThrust)
+                        (entity as MyThrust).Render.UpdateFlameAnimatorData();
+                }
+
             }
             Grid.Render.UpdateTransparency();
 
