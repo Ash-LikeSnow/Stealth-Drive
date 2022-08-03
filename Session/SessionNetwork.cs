@@ -52,7 +52,8 @@ namespace StealthSystem
                         break;
                     case PacketType.UpdateDuration:
                         var dPacket = packet as UpdateDurationPacket;
-                        comp.RemainingDuration += dPacket.DurationChange;
+                        //comp.RemainingDuration += dPacket.DurationChange;
+                        comp.TotalTime += dPacket.DurationChange;
                         break;
                     case PacketType.Replicate:
                         var rPacket = packet as ReplicationPacket;

@@ -74,6 +74,8 @@ namespace StealthSystem
         internal int SurfaceArea;
         internal int MaxDuration;
         internal int RemainingDuration;
+        internal int TimeElapsed;
+        internal int TotalTime;
         internal long CompTick15;
         internal long CompTick60;
         internal long SignalDistance;
@@ -277,8 +279,12 @@ namespace StealthSystem
             {
                 var newPrimary = gridData.MasterComp;
                 newPrimary.IsPrimary = true;
-                newPrimary.RemainingDuration = StealthActive ? MaxDuration - RemainingDuration : RemainingDuration;
-                newPrimary.CoolingDown = RemainingDuration > 0;
+                //newPrimary.RemainingDuration = StealthActive ? MaxDuration - RemainingDuration : RemainingDuration;
+                //newPrimary.CoolingDown = RemainingDuration > 0;
+                newPrimary.TotalTime = TotalTime;
+                newPrimary.TimeElapsed = TimeElapsed;
+                newPrimary.CoolingDown = TimeElapsed < TotalTime;
+
             }
 
             gridData.StealthComps.Remove(this);
@@ -401,16 +407,16 @@ namespace StealthSystem
 
             if (StealthActive)
             {
-                int timeLeft = (RemainingDuration) / 60;
+                int timeLeft = (TotalTime - TimeElapsed) / 60;
                 int seconds = timeLeft % 60;
                 int minutes = (timeLeft - seconds) / 60;
                 builder.Append("Time Remaining: ")
-                    .Append($"{minutes.ToString("00")}:{seconds.ToString("00")} \n");
+                    .Append($"{minutes.ToString("00")}:{seconds.ToString("00")}\n");
             }
 
             if (CoolingDown)
             {
-                int timeLeft = (RemainingDuration) / 60;
+                int timeLeft = (TimeElapsed) / 60;
                 int seconds = timeLeft % 60;
                 int minutes = (timeLeft - seconds) / 60;
                 builder.Append("Time Remaining: ")
@@ -966,7 +972,8 @@ namespace StealthSystem
 
             StealthActive = repo.StealthActive;
             CoolingDown = repo.CoolingDown;
-            RemainingDuration = repo.RemainingDuration;
+            TimeElapsed = repo.RemainingDuration;
+            TotalTime = repo.TotalTime;
 
             StealthOnInit = repo.StealthActive;
             CdOnInit = repo.CoolingDown;

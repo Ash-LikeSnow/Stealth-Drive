@@ -28,14 +28,17 @@ namespace StealthSystem
     {
         [ProtoMember(1)] public bool StealthActive;
         [ProtoMember(2)] public bool CoolingDown;
-        [ProtoMember(3)] public int RemainingDuration;
+        [ProtoMember(3)] public int RemainingDuration; //TimeElapsed
+        [ProtoMember(4)] public int TotalTime;
 
 
         public void Sync(DriveComp comp)
         {
             StealthActive = comp.StealthActive;
             CoolingDown = comp.CoolingDown;
-            RemainingDuration = comp.RemainingDuration;
+            //RemainingDuration = comp.RemainingDuration;
+            RemainingDuration = comp.TimeElapsed;
+            TotalTime = comp.TotalTime;
         }
 
     }
@@ -73,7 +76,9 @@ namespace StealthSystem
         internal bool Revealed;
         internal bool DisableShields;
         internal bool DisableWeapons;
+
         internal int DamageTaken;
+        internal int SinkBonus;
 
         private StealthSession _session;
 

@@ -38,11 +38,12 @@ namespace StealthSystem
 
         internal bool Inited;
         internal bool PowerDirty;
-        internal bool Working;
+        internal bool Working = true;
         internal bool SufficientPower;
         internal bool Accumulating;
         internal bool Radiating;
         internal bool WasAccumulating;
+        internal bool WorkingChanged;
 
         internal long CompTick;
         internal byte HeatPercent;
@@ -74,7 +75,7 @@ namespace StealthSystem
         {
             Grid = Block.CubeGrid;
 
-            Block.IsWorkingChanged += IsWorkingChanged;
+            //Block.IsWorkingChanged += IsWorkingChanged;
 
             Block.Components.Add(this);
             CompTick = Block.EntityId % 20;
@@ -100,7 +101,7 @@ namespace StealthSystem
             var gridData = StealthSession.GridMap[Grid];
             gridData.HeatComps.Remove(this);
 
-            Block.IsWorkingChanged -= IsWorkingChanged;
+            //Block.IsWorkingChanged -= IsWorkingChanged;
 
             Source.SystemChanged -= SourceChanged;
 
@@ -143,15 +144,14 @@ namespace StealthSystem
             PowerDirty = true;
         }
 
-        internal void GridChange()
+        internal void GridChange(GridComp gridComp)
         {
-            var gridData = StealthSession.GridMap[Grid];
-            gridData.HeatComps.Remove(this);
+            gridComp.HeatComps.Remove(this);
 
             Grid = Block.CubeGrid;
 
-            var newGridData = StealthSession.GridMap[Grid];
-            newGridData.HeatComps.Add(this);
+            var newGridComp = StealthSession.GridMap[Grid];
+            newGridComp.HeatComps.Add(this);
 
             Source = Grid.ResourceDistributor as MyResourceDistributorComponent;
         }
@@ -165,7 +165,13 @@ namespace StealthSystem
             }
             var available = Source.MaxAvailableResourceByType(MyResourceDistributorComponent.ElectricityId, (MyCubeGrid)Grid) - Source.TotalRequiredInputByType(MyResourceDistributorComponent.ElectricityId, (MyCubeGrid)Grid);
             SufficientPower = available > 0;
-            Working = Block.IsFunctional && Block.Enabled && SufficientPower;
+
+            var isWorking = Block.IsFunctional && Block.Enabled && SufficientPower;
+            if (isWorking != Working)
+            {
+                Working = isWorking;
+                WorkingChanged = true;
+            }
             //SufficientPower = StealthActive ? available >= 0 : available >= RequiredPower;
             //Online = Block.IsFunctional && Block.Enabled && available > 0;
 

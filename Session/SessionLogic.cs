@@ -94,7 +94,7 @@ namespace StealthSystem
                         //Update cooldown and heat signal
                         if (comp.CoolingDown)
                         {
-                            if (comp.RemainingDuration-- <= 0 || comp.EnterStealth)
+                            if (comp.TimeElapsed-- <= 0 || comp.EnterStealth) //comp.RemainingDuration-- <= 0
                             {
                                 if (!IsDedicated && comp.HeatSignature != null)
                                 {
@@ -163,7 +163,7 @@ namespace StealthSystem
                         {
                             //Exit stealth conditions
                             var forcedExit = !comp.IsPrimary || !comp.Online || gridComp.Revealed || gridComp.DamageTaken > DamageThreshold;
-                            if (forcedExit || !comp.IgnorePower && (!comp.SufficientPower || comp.RemainingDuration-- <= 0))
+                            if (forcedExit || !comp.IgnorePower && (!comp.SufficientPower || comp.TimeElapsed++ >= comp.TotalTime)) //comp.RemainingDuration-- <= 0
                                 comp.ExitStealth = true;
 
                             //Decrease remaining stealth duration after jump
@@ -173,7 +173,8 @@ namespace StealthSystem
                                 foreach (var jump in jumpList)
                                 {
                                     if (jump.CurrentStoredPower < comp.JumpDrives[jump])
-                                        comp.RemainingDuration -= JumpPenalty;
+                                        comp.TotalTime -= JumpPenalty;
+                                        //comp.RemainingDuration -= JumpPenalty;
 
                                     comp.JumpDrives[jump] = jump.CurrentStoredPower;
                                 }
@@ -233,7 +234,9 @@ namespace StealthSystem
                                 gridComp.DamageTaken = 0;
                                 gridComp.Revealed = false;
                                 comp.StealthActive = true;
-                                comp.RemainingDuration = comp.MaxDuration;
+                                //comp.RemainingDuration = comp.MaxDuration;
+                                comp.TotalTime = comp.MaxDuration;
+                                comp.TimeElapsed = 0;
 
                                 //comp.Grid.Flags |= (EntityFlags)0x1000000;
 
@@ -269,7 +272,9 @@ namespace StealthSystem
                                 comp.IgnorePower = false;
 
                                 comp.CoolingDown = true;
-                                comp.RemainingDuration = comp.MaxDuration - comp.RemainingDuration;
+                                //comp.RemainingDuration = comp.MaxDuration - comp.RemainingDuration;
+                                //comp.TotalTime = comp.TimeElapsed;
+                                //comp.TimeElapsed = 0;
 
                                 //comp.Grid.Flags ^= (EntityFlags)0x1000000;
 
@@ -387,10 +392,12 @@ namespace StealthSystem
                 }
 
 
-                if (Tick20 && master != null)
+                if (Tick20)
                 {
-                    _duration = master.MaxDuration;
-                    master.MaxDuration = BaseDuration;
+                    if (master != null)
+                        master.MaxDuration = BaseDuration + gridComp.SinkBonus;
+
+                        gridComp.SinkBonus = 0;
                 }
 
                 if (gridComp.HeatComps.Count == 0) continue;
@@ -401,21 +408,12 @@ namespace StealthSystem
                     {
                         var comp = gridComp.HeatComps[j];
 
-                        //if (comp.Age < 2)
-                        //{
-                        //    comp.Age++;
-                        //    continue;
-                        //}
-
-                        //if (!comp.Inited)
-                        //{
-                        //    MyLog.Default.WriteLine("Try Init on loop");
-                        //    comp.Init();
-                        //}
-
                         if (comp.Grid != comp.Block.CubeGrid)
                         {
-                            comp.GridChange();
+                            comp.GridChange(gridComp);
+                            j--;
+                            // Deal with conditionals?
+                            continue;
                         }
 
                         if (enter)
@@ -432,6 +430,7 @@ namespace StealthSystem
                         {
                             comp.Radiating = false;
                             comp.Block.SetEmissiveParts(RADIANT_EMISSIVE, Color.DarkSlateGray, 0.1f);
+                            comp.HeatPercent = 0;
                         }
 
                         //if (comp.Radiating)
@@ -449,22 +448,36 @@ namespace StealthSystem
                         if (!IsDedicated && LastTerminal == comp.Block && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
                             RefreshTerminal(comp.Block, comp.ShowInToolbarSwitch);
 
+                        if (comp.WorkingChanged && master != null)
+                        {
+                            if (master.StealthActive)
+                            {
+                                var timeChange = comp.Working ? SinkDuration : -SinkDuration;
+                                master.TotalTime += timeChange;
+
+                                comp.Accumulating = comp.Working;
+                            }
+                            comp.WorkingChanged = false;
+                        }
+
                         if (comp.Working)
                         {
                             if (comp.Accumulating)
-                                comp.HeatPercent = (byte)(100 * (1 - (master.RemainingDuration / (float)_duration)));
+                            {
+                                //comp.HeatPercent = (byte)(100 * (1 - (master.RemainingDuration / (float)_duration)));
+                                comp.HeatPercent = (byte)(100f * (float)master.TimeElapsed / (float)master.TotalTime);
+                            }
                             else if (comp.Radiating)
                             {
-                                comp.HeatPercent = (byte)(100 * (master.RemainingDuration / (float)_duration));
+                                //comp.HeatPercent = (byte)(100 * (master.RemainingDuration / (float)_duration));
+                                comp.HeatPercent = (byte)(100f * ((float)master.TimeElapsed / (float)master.TotalTime));
                                 if (!IsClient) comp.DamageBlocks();
                             }
-                            else
-                            {
-                                comp.HeatPercent = 0;
-                            }
 
-                            if (master != null)
-                                master.MaxDuration += SinkDuration;
+                            gridComp.SinkBonus += SinkDuration;
+
+                            //if (master != null)
+                                //master.MaxDuration += SinkDuration;
 
                         }
                         else
@@ -473,12 +486,17 @@ namespace StealthSystem
                             {
                                 comp.Accumulating = false;
                                 comp.WasAccumulating = true;
-                                master.RemainingDuration -= SinkDuration * (100 - comp.HeatPercent) / 100;
+                                //master.RemainingDuration -= SinkDuration * (100 - comp.HeatPercent) / 100;
                             }
 
                             if (comp.HeatPercent > 0)
                             {
-                                comp.HeatPercent -= (byte)(100 * (20 / (float)SinkDuration));
+                                var loss = (byte)(100 / (SinkDuration / 20f));
+                                if (loss >= comp.HeatPercent)
+                                    comp.HeatPercent = 0;
+                                else
+                                    comp.HeatPercent -= loss;
+
                                 if (!IsClient) comp.DamageBlocks();
                                 //do heat signature
                             }
