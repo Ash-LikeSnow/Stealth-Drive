@@ -12,11 +12,15 @@ namespace StealthSystem
         /// Returns status of drive. 0 = Ready, 1 = Active, 2 = Cooldown, 3 = Not enough power, 4 = Offline
         public int GetStatus(Sandbox.ModAPI.Ingame.IMyTerminalBlock drive) => _getStatus?.Invoke(drive) ?? 4;
 
+        /// Returns remaining duration of stealth/cooldown.
+        public int GetDuration(Sandbox.ModAPI.Ingame.IMyTerminalBlock drive) => _getDuration?.Invoke(drive) ?? 0;
+
 
 
 
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool> _toggleStealth;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int> _getStatus;
+        private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int> _getDuration;
 
         public bool Activate(Sandbox.ModAPI.Ingame.IMyTerminalBlock pbBlock)
         {
@@ -32,6 +36,7 @@ namespace StealthSystem
 
             AssignMethod(delegates, "ToggleStealth", ref _toggleStealth);
             AssignMethod(delegates, "GetStatus", ref _getStatus);
+            AssignMethod(delegates, "GetDuration", ref _getDuration);
             return true;
         }
 

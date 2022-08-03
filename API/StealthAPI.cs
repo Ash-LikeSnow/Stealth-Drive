@@ -14,6 +14,9 @@ namespace StealthSystem
         /// Returns status of drive. 0 = Ready, 1 = Active, 2 = Cooldown, 3 = Not enough power, 4 = Offline
         public int GetStatus(IMyTerminalBlock drive) => _getStatus?.Invoke(drive) ?? 4;
 
+        /// Returns remaining duration of stealth/cooldown.
+        public int GetDuration(IMyTerminalBlock drive) => _getDuration?.Invoke(drive) ?? 0;
+
 
 
         private const long CHANNEL = 2172757427;
@@ -23,6 +26,7 @@ namespace StealthSystem
 
         private Func<IMyTerminalBlock, bool, bool> _toggleStealth;
         private Func<IMyTerminalBlock, int> _getStatus;
+        private Func<IMyTerminalBlock, int> _getDuration;
 
         public bool IsReady { get; private set; }
 
@@ -77,6 +81,7 @@ namespace StealthSystem
             /// base methods
             AssignMethod(delegates, "ToggleStealth", ref _toggleStealth);
             AssignMethod(delegates, "GetStatus", ref _getStatus);
+            AssignMethod(delegates, "GetDuration", ref _getDuration);
         }
 
         private void AssignMethod<T>(IReadOnlyDictionary<string, Delegate> delegates, string name, ref T field)
