@@ -38,14 +38,14 @@ namespace StealthSystem
         internal static bool IsDedicated;
         internal static bool WcActive;
 
+        private bool FirstRun = true;
+
         public override void LoadData()
         {
             IsServer = MyAPIGateway.Multiplayer.MultiplayerActive && MyAPIGateway.Session.IsServer;
             IsClient = MyAPIGateway.Multiplayer.MultiplayerActive && !MyAPIGateway.Session.IsServer;
             IsDedicated = MyAPIGateway.Utilities.IsDedicated;
 
-            DriveMap = new Dictionary<long, DriveComp>();
-            GridMap = new Dictionary<IMyCubeGrid, GridComp>();
             GridGroupMap = new Dictionary<IMyGridGroupData, GroupMap>();
             GridList = new List<GridComp>();
             StealthedGrids = new HashSet<IMyCubeGrid>();
@@ -77,7 +77,7 @@ namespace StealthSystem
             else if (IsServer)
             {
                 MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(ServerPacketId, ProcessPacket);
-                MyVisualScriptLogicProvider.PlayerConnected += PlayerConnected;
+                MyVisualScriptLogicProvider.PlayerRespawnRequest += PlayerConnected;
             }
 
             if (!IsClient)
@@ -109,6 +109,13 @@ namespace StealthSystem
 
             //if (MyAPIGateway.Input.IsNewKeyPressed(MyKeys.J))
             //    Logs.CheckGrid();
+
+            if (FirstRun)
+            {
+                if (IsServer && !IsDedicated)
+                    InitPlayers();
+                FirstRun = false;
+            }
         }
 
         protected override void UnloadData()
@@ -118,7 +125,7 @@ namespace StealthSystem
             else if (IsServer)
             {
                 MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(ServerPacketId, ProcessPacket);
-                MyVisualScriptLogicProvider.PlayerConnected -= PlayerConnected;
+                MyVisualScriptLogicProvider.PlayerRespawnRequest -= PlayerConnected;
             }
 
             MyEntities.OnEntityCreate -= OnEntityCreate;
@@ -134,8 +141,6 @@ namespace StealthSystem
             _gridCompPool.Clear();
             _customControls = null;
             _customActions = null;
-            DriveMap = null;
-            GridMap = null;
         }
 
     }

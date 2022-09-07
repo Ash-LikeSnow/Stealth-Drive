@@ -107,7 +107,7 @@ namespace StealthSystem
                 return;
 
             var map = _groupMapPool.Count > 0 ? _groupMapPool.Pop() : new GroupMap();
-            map.Init(groupData);
+            map.Init(groupData, this);
 
             //groupData.OnReleased += map.OnReleased;
             groupData.OnGridAdded += map.OnGridAdded;
@@ -152,6 +152,15 @@ namespace StealthSystem
                 SendPacketToClient(packet, player.SteamUserId);
             }
             return false;
+        }
+
+        private void InitPlayers()
+        {
+            List<IMyPlayer> players = new List<IMyPlayer>();
+            MyAPIGateway.Multiplayer.Players.GetPlayers(players);
+
+            for (int i = 0; i < players.Count; i++)
+                PlayerConnected(players[i].IdentityId);
         }
 
         internal bool ModCheck()

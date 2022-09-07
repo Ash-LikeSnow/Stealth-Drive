@@ -48,8 +48,12 @@ namespace StealthSystem
         internal long CompTick;
         internal byte HeatPercent;
 
-        internal SinkComp(IMyFunctionalBlock sinkBlock)
+        private StealthSession _session;
+
+        internal SinkComp(IMyFunctionalBlock sinkBlock, StealthSession session)
         {
+            _session = session;
+
             Block = sinkBlock;
         }
 
@@ -98,7 +102,7 @@ namespace StealthSystem
 
         internal void Close()
         {
-            var gridData = StealthSession.GridMap[Grid];
+            var gridData = _session.GridMap[Grid];
             gridData.HeatComps.Remove(this);
 
             //Block.IsWorkingChanged -= IsWorkingChanged;
@@ -150,7 +154,7 @@ namespace StealthSystem
 
             Grid = Block.CubeGrid;
 
-            var newGridComp = StealthSession.GridMap[Grid];
+            var newGridComp = _session.GridMap[Grid];
             newGridComp.HeatComps.Add(this);
 
             Source = Grid.ResourceDistributor as MyResourceDistributorComponent;
@@ -235,10 +239,10 @@ namespace StealthSystem
                         {
                             BoundingBoxD bBox;
                             slim.GetWorldBoundingBox(out bBox);
+
                             var bMatrix = new MatrixD(grid.PositionComp.WorldMatrixRef);
                             bMatrix.Translation = Vector3D.Zero;
                             blockBox = new MyOrientedBoundingBoxD(bBox, bMatrix);
-                            //BlockBoxes.Add(blockBox);
                         }
                         else
                         {

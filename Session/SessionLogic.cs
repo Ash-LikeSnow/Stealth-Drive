@@ -564,7 +564,7 @@ namespace StealthSystem
                     }
                     else
                     {
-                        var comp = new SinkComp(module);
+                        var comp = new SinkComp(module, this);
                         gridData.HeatComps.Add(comp);
                         comp.Init();
                     }

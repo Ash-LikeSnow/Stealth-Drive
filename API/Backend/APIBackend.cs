@@ -1,24 +1,9 @@
-﻿using Sandbox.Common.ObjectBuilders;
-using Sandbox.Definitions;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
-using VRage.Game;
-using VRage.Game.Components;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
-using VRage.ObjectBuilders;
-using VRageMath;
-using VRage.Utils;
-using Sandbox.Game.Entities;
-using ObjectBuilders.SafeZone;
-using SpaceEngineers.Game.ModAPI;
-using VRage.Game.Entity;
-using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
-using Sandbox.Game.EntityComponents;
-using VRage.Collections;
-using Sandbox.ModAPI.Interfaces.Terminal;
-using Sandbox.Game.Entities.Blocks;
+using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+using IMyCubeGrid = VRage.Game.ModAPI.Ingame.IMyCubeGrid;
 
 namespace StealthSystem
 {
@@ -35,9 +20,11 @@ namespace StealthSystem
 
             ModApiMethods = new Dictionary<string, Delegate>
             {
-                ["ToggleStealth"] = new Func<IMyTerminalBlock, bool, bool>(ToggleStealth),
-                ["GetStatus"] = new Func<IMyTerminalBlock, int>(GetStatus),
-                ["GetDuration"] = new Func<IMyTerminalBlock, int>(GetDuration),
+                ["ToggleStealth"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, bool, bool>(ToggleStealth),
+                ["GetStatus"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int>(GetStatus),
+                ["GetDuration"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int>(GetDuration),
+                ["GetMainDrive"] = new Func<VRage.Game.ModAPI.IMyCubeGrid, Sandbox.ModAPI.IMyTerminalBlock>(GetMainDrive),
+                ["GetHeatSinks"] = new Action<VRage.Game.ModAPI.IMyCubeGrid, ICollection<Sandbox.ModAPI.IMyTerminalBlock>>(GetHeatSinks),
             };
         }
 
@@ -49,6 +36,8 @@ namespace StealthSystem
                 ["ToggleStealth"] = new Func<IMyTerminalBlock, bool>(ToggleStealthPB),
                 ["GetStatus"] = new Func<IMyTerminalBlock, int>(GetStatus),
                 ["GetDuration"] = new Func<IMyTerminalBlock, int>(GetDuration),
+                ["GetMainDrive"] = new Func<IMyCubeGrid, IMyTerminalBlock>(GetMainDrive),
+                ["GetHeatSinks"] = new Action<IMyCubeGrid, ICollection<IMyTerminalBlock>>(GetHeatSinksPB),
             };
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("StealthPbAPI");
             pb.Getter = b => PbApiMethods;
@@ -88,7 +77,39 @@ namespace StealthSystem
 
             var duration = comp.StealthActive ? comp.TotalTime - comp.TimeElapsed : comp.CoolingDown ? comp.TimeElapsed : comp.MaxDuration;
             return duration;
+        }
 
+        private Sandbox.ModAPI.IMyTerminalBlock GetMainDrive(IMyCubeGrid grid)
+        {
+            GridComp comp;
+            if (!_session.GridMap.TryGetValue(grid as VRage.Game.ModAPI.IMyCubeGrid, out comp))
+                return null;
+
+            return comp.MasterComp?.Block;
+        }
+
+        private void GetHeatSinksPB(IMyCubeGrid grid, ICollection<IMyTerminalBlock> blocks)
+        {
+            GridComp comp;
+            if (_session.GridMap.TryGetValue(grid as VRage.Game.ModAPI.IMyCubeGrid, out comp))
+            {
+                for (int i = 0; i < comp.HeatComps.Count; i++)
+                    blocks.Add(comp.HeatComps[i].Block);
+            }
+
+            return;
+        }
+
+        private void GetHeatSinks(VRage.Game.ModAPI.IMyCubeGrid grid, ICollection<Sandbox.ModAPI.IMyTerminalBlock> blocks)
+        {
+            GridComp comp;
+            if (_session.GridMap.TryGetValue(grid, out comp))
+            {
+                for (int i = 0; i < comp.HeatComps.Count; i++)
+                    blocks.Add(comp.HeatComps[i].Block);
+            }
+
+            return;
         }
 
     }

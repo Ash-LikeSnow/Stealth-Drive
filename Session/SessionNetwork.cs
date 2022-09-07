@@ -84,6 +84,7 @@ namespace StealthSystem
     [ProtoInclude(4, typeof(UpdateStatePacket))]
     [ProtoInclude(5, typeof(UpdateDurationPacket))]
     [ProtoInclude(6, typeof(ReplicationPacket))]
+    [ProtoInclude(7, typeof(SettingsPacket))]
     public class Packet
     {
         [ProtoMember(1)] internal long EntityId;

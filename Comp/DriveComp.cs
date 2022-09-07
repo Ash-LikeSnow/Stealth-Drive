@@ -146,7 +146,7 @@ namespace StealthSystem
                 return;
             }
 
-            var gridData = StealthSession.GridMap[Grid];
+            var gridData = _session.GridMap[Grid];
             if (gridData.StealthComps.Count == 1)
             {
                 IsPrimary = true;
@@ -191,7 +191,7 @@ namespace StealthSystem
             
             _session.DriveMap.Remove(Block.EntityId);
 
-            var gridData = StealthSession.GridMap[Grid];
+            var gridData = _session.GridMap[Grid];
             gridData.StealthComps.Remove(this);
 
             Grid.OnGridSplit -= GridSplit;
@@ -274,7 +274,7 @@ namespace StealthSystem
             if (StealthActive)
                 SwitchStealth(false, true);
 
-            var gridData = StealthSession.GridMap[Grid];
+            var gridData = _session.GridMap[Grid];
             if (TransferPrimary(true))
             {
                 var newPrimary = gridData.MasterComp;
@@ -294,7 +294,7 @@ namespace StealthSystem
             //if (StealthActive)
             //    Grid.Visible = false;
 
-            var newGridData = StealthSession.GridMap[Block.CubeGrid];
+            var newGridData = _session.GridMap[Block.CubeGrid];
             GridComp = newGridData;
             newGridData.StealthComps.Add(this);
             if (newGridData.MasterComp == null)
@@ -320,7 +320,7 @@ namespace StealthSystem
 
         internal bool TransferPrimary(bool force)
         {
-            var gridData = StealthSession.GridMap[Grid];
+            var gridData = _session.GridMap[Grid];
 
             if (gridData.StealthComps.Count <= 1)
                 return false;
@@ -552,7 +552,7 @@ namespace StealthSystem
             for (int i = 0; i < grids.Count; i++)
             {
                 var grid = grids[i];
-                var comp = StealthSession.GridMap[grid];
+                var comp = _session.GridMap[grid];
 
                 if (set)
                 {

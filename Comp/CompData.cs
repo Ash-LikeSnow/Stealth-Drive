@@ -146,7 +146,7 @@ namespace StealthSystem
                         return;
                     }
 
-                    var gridComp = StealthSession.GridMap[Grid];
+                    var gridComp = _session.GridMap[Grid];
 
                     if (gridComp.StealthComps.Contains(dComp))
                     {
@@ -203,11 +203,15 @@ namespace StealthSystem
             GroupsDirty = false;
             Revealed = false;
             DamageTaken = 0;
+
+            _session = null;
         }
     }
 
     internal class GroupMap
     {
+        private StealthSession _session;
+
         public IMyGridGroupData GroupData;
 
         internal List<IMyCubeGrid> ConnectedGrids = new List<IMyCubeGrid>();
@@ -215,9 +219,11 @@ namespace StealthSystem
         internal List<IMySlimBlock> SlimBlocks = new List<IMySlimBlock>();
         internal HashSet<IMyEntity> Children = new HashSet<IMyEntity>();
 
-        internal void Init(IMyGridGroupData data)
+        internal void Init(IMyGridGroupData data, StealthSession session)
         {
             GroupData = data;
+
+            _session = session;
         }
 
         public void OnGridAdded(IMyGridGroupData newGroup, IMyCubeGrid grid, IMyGridGroupData oldGroup)
@@ -227,7 +233,7 @@ namespace StealthSystem
                 ConnectedGrids.Add(grid);
 
                 GridComp gridComp;
-                if (!StealthSession.GridMap.TryGetValue(grid, out gridComp))
+                if (!_session.GridMap.TryGetValue(grid, out gridComp))
                     return;
 
                 gridComp.GroupMap = this;
@@ -262,7 +268,7 @@ namespace StealthSystem
                         //continue;
                     }
 
-                    if (!StealthSession.GridMap.TryGetValue(newSubgrid, out subgridComp))
+                    if (!_session.GridMap.TryGetValue(newSubgrid, out subgridComp))
                         continue;
 
                     if (thisActive) //Reenable shield emitters/vanilla turrets since previously connected grid is no longer stealthed
@@ -310,7 +316,7 @@ namespace StealthSystem
                 ConnectedGrids.Remove(grid);
 
                 GridComp gridComp;
-                if (!StealthSession.GridMap.TryGetValue(grid, out gridComp))
+                if (!_session.GridMap.TryGetValue(grid, out gridComp))
                     return;
 
                 gridComp.GroupsDirty = true;
@@ -340,7 +346,7 @@ namespace StealthSystem
                             StealthConnectedGrid(formerSubgrid, thisMaster, false);
                     }
 
-                    if (!StealthSession.GridMap.TryGetValue(formerSubgrid, out subgridComp))
+                    if (!_session.GridMap.TryGetValue(formerSubgrid, out subgridComp))
                         continue;
 
                     if (thisActive) //Reenable shield emitters/vanilla turrets since previously connected grid is no longer stealthed
@@ -434,6 +440,8 @@ namespace StealthSystem
 
             SlimBlocks.Clear();
             Children.Clear();
+
+            _session = null;
         }
     }
 

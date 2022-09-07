@@ -74,8 +74,8 @@ namespace StealthSystem
         internal static bool DisableShields;
         internal static bool DisableWeapons;
 
-        internal Dictionary<long, DriveComp> DriveMap;
-        internal static Dictionary<IMyCubeGrid, GridComp> GridMap;
+        internal readonly Dictionary<long, DriveComp> DriveMap = new Dictionary<long, DriveComp>();
+        internal readonly Dictionary<IMyCubeGrid, GridComp> GridMap = new Dictionary<IMyCubeGrid, GridComp>();
         internal static Dictionary<IMyGridGroupData, GroupMap> GridGroupMap;
         internal static List<GridComp> GridList;
         internal static HashSet<IMyCubeGrid> StealthedGrids;
@@ -96,8 +96,6 @@ namespace StealthSystem
 
         private readonly Vector3D _large = new Vector3D(1.125, 6.25, 3.5);
         private readonly Vector3D _small = new Vector3D(1.125, 6.25, 1.125);
-
-        private int _duration;
 
         public StealthSession()
         {
