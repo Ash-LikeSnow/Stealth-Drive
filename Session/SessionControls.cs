@@ -207,7 +207,13 @@ namespace StealthSystem
 
         internal void EnterStealth(IMyTerminalBlock block)
         {
-            var comp = DriveMap[block.EntityId];
+            DriveComp comp;
+            if (!DriveMap.TryGetValue(block.EntityId, out comp))
+            {
+                Logs.WriteLine("EnterStealth() - Comp not found!");
+                return;
+            }
+
             if (!comp.Online || !comp.SufficientPower || comp.CoolingDown || comp.StealthActive)
                 return;
 
@@ -219,7 +225,13 @@ namespace StealthSystem
 
         internal void ExitStealth(IMyTerminalBlock block)
         {
-            var comp = DriveMap[block.EntityId];
+            DriveComp comp;
+            if (!DriveMap.TryGetValue(block.EntityId, out comp))
+            {
+                Logs.WriteLine("ExitStealth() - Comp not found!");
+                return;
+            }
+
             if (!comp.Online || !comp.StealthActive) return;
 
             comp.ExitStealth = true;
@@ -230,7 +242,13 @@ namespace StealthSystem
 
         internal void SwitchStealth(IMyTerminalBlock block)
         {
-            var comp = DriveMap[block.EntityId];
+            DriveComp comp;
+            if (!DriveMap.TryGetValue(block.EntityId, out comp))
+            {
+                Logs.WriteLine("SwitchStealth() - Comp not found!");
+                return;
+            }
+
             comp.ToggleStealth();
 
             foreach (var control in _customControls)

@@ -128,8 +128,8 @@ namespace StealthSystem
                 Config.DriveConfig.Duration = 1800;
             if (Config.DriveConfig.PowerScale <= 0)
                 Config.DriveConfig.PowerScale = 0.02f;
-            if (Config.DriveConfig.SignalRangeScale <= 0)
-                Config.DriveConfig.SignalRangeScale = 20;
+            if (Config.DriveConfig.SignalRangeScale <= 0f)
+                Config.DriveConfig.SignalRangeScale = 20f;
 
             if (Config.SinkConfig == null)
                 Config.SinkConfig = new StealthSettings.SinkSettings();
@@ -179,7 +179,7 @@ namespace StealthSystem
         {
             [ProtoMember(1)] public int Duration = 1800;
             [ProtoMember(2)] public float PowerScale = 0.02f;
-            [ProtoMember(3)] public int SignalRangeScale = 20;
+            [ProtoMember(3)] public float SignalRangeScale = 20f;
         }
 
         [ProtoContract]

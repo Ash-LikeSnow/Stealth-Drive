@@ -67,7 +67,7 @@ namespace StealthSystem
         internal static int FadeSteps;
         internal static int DamageThreshold;
         internal static float PowerScale;
-        internal static long SignalRangeScale;
+        internal static float SignalRangeScale;
         internal static float SinkPower;
         internal static float Transparency;
         internal static bool DoDamage;

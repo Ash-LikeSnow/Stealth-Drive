@@ -472,7 +472,7 @@ namespace StealthSystem
             SurfaceArea = (int)(areaMetres / scale);
 
             RequiredPower = areaMetres * StealthSession.PowerScale;
-            SignalDistance = (int)RequiredPower * StealthSession.SignalRangeScale;
+            SignalDistance = (int)(RequiredPower * StealthSession.SignalRangeScale);
             SignalDistanceSquared = SignalDistance * SignalDistance;
 
         }
