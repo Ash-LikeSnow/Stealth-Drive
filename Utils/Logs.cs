@@ -1,11 +1,6 @@
-﻿using ProtoBuf;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VRage.Game.ModAPI;
 
 namespace StealthSystem

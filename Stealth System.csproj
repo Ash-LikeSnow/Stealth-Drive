@@ -134,6 +134,7 @@
     <Compile Include="API\StealthAPI.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Support\WaterModAPI.cs" />
     <Compile Include="Utils\EmissiveValues.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

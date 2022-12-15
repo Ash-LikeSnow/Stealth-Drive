@@ -1,23 +1,13 @@
-﻿using Sandbox.Common.ObjectBuilders;
-using Sandbox.Definitions;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
-using VRage.Game;
-using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRageMath;
 using VRage.Utils;
-using Sandbox.Game.Entities;
-using ObjectBuilders.SafeZone;
-using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
-using Sandbox.Game.EntityComponents;
 using VRage.Collections;
-using Sandbox.ModAPI.Interfaces.Terminal;
+using Jakaria.API;
 
 namespace StealthSystem
 {
@@ -83,6 +73,7 @@ namespace StealthSystem
         internal Settings ConfigSettings;
         internal APIBackend API;
         internal APIServer APIServer;
+        internal readonly WaterModAPI WaterAPI = new WaterModAPI();
 
         internal object InitObj = new object();
         internal bool Inited;

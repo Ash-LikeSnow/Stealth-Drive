@@ -1,6 +1,5 @@
 ﻿using Sandbox.ModAPI;
 using System;
-using VRage.Game.ModAPI;
 using System.Collections.Generic;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 using IMyCubeGrid = VRage.Game.ModAPI.Ingame.IMyCubeGrid;

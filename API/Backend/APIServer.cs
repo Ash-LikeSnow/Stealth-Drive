@@ -1,24 +1,6 @@
-﻿using Sandbox.Common.ObjectBuilders;
-using Sandbox.Definitions;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
-using VRage.Game;
-using VRage.Game.Components;
-using VRage.Game.ModAPI;
-using VRage.ModAPI;
-using VRage.ObjectBuilders;
-using VRageMath;
-using VRage.Utils;
-using Sandbox.Game.Entities;
-using ObjectBuilders.SafeZone;
-using SpaceEngineers.Game.ModAPI;
-using VRage.Game.Entity;
-using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
-using Sandbox.Game.EntityComponents;
-using VRage.Collections;
-using Sandbox.ModAPI.Interfaces.Terminal;
-using Sandbox.Game.Entities.Blocks;
 
 namespace StealthSystem
 {
