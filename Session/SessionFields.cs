@@ -18,12 +18,12 @@ namespace StealthSystem
 
         internal const int FADE_INTERVAL = 5;
 
-        internal static readonly HashSet<string> STEALTH_BLOCKS = new HashSet<string>()
+        internal readonly HashSet<string> STEALTH_BLOCKS = new HashSet<string>()
         {"StealthDrive", "StealthDriveSmall"};
-        internal static readonly HashSet<string> HEAT_BLOCKS = new HashSet<string>()
+        internal readonly HashSet<string> HEAT_BLOCKS = new HashSet<string>()
         {"StealthHeatSink", "StealthHeatSinkSmall"};
 
-        internal static readonly HashSet<string> SHIELD_BLOCKS = new HashSet<string>()
+        internal readonly HashSet<string> SHIELD_BLOCKS = new HashSet<string>()
         {
             "EmitterL",
             "EmitterS",
@@ -40,35 +40,35 @@ namespace StealthSystem
             "SmallGridSmallShield",
         };
 
-        internal static readonly Guid CompDataGuid = new Guid("75BBB4F5-4FB9-4230-AAAA-BB79C9811507");
+        internal string ModPath;
+        internal readonly Guid CompDataGuid = new Guid("75BBB4F5-4FB9-4230-AAAA-BB79C9811507");
         internal static readonly MyStringId _square = MyStringId.GetOrCompute("Square");
-        internal static string ModPath;
 
-        internal static BoundingBoxD LargeBox;
-        internal static BoundingBoxD SmallBox;
+        internal BoundingBoxD LargeBox;
+        internal BoundingBoxD SmallBox;
 
-        internal static EntityFlags StealthFlag;
+        internal EntityFlags StealthFlag;
 
-        internal static int BaseDuration;
-        internal static int SinkDuration;
-        internal static int ShieldDelay;
-        internal static int JumpPenalty;
-        internal static int FadeTime;
-        internal static int FadeSteps;
-        internal static int DamageThreshold;
-        internal static float PowerScale;
-        internal static float SignalRangeScale;
-        internal static float SinkPower;
-        internal static float Transparency;
-        internal static bool DoDamage;
-        internal static bool DisableShields;
-        internal static bool DisableWeapons;
+        internal int BaseDuration;
+        internal int SinkDuration;
+        internal int ShieldDelay;
+        internal int JumpPenalty;
+        internal int FadeTime;
+        internal int FadeSteps;
+        internal int DamageThreshold;
+        internal float PowerScale;
+        internal float SignalRangeScale;
+        internal float SinkPower;
+        internal float Transparency;
+        internal bool DoDamage;
+        internal bool DisableShields;
+        internal bool DisableWeapons;
 
         internal readonly Dictionary<long, DriveComp> DriveMap = new Dictionary<long, DriveComp>();
         internal readonly Dictionary<IMyCubeGrid, GridComp> GridMap = new Dictionary<IMyCubeGrid, GridComp>();
-        internal static Dictionary<IMyGridGroupData, GroupMap> GridGroupMap;
-        internal static List<GridComp> GridList;
-        internal static HashSet<IMyCubeGrid> StealthedGrids;
+        internal readonly Dictionary<IMyGridGroupData, GroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GroupMap>();
+        internal readonly List<GridComp> GridList = new List<GridComp>();
+        internal readonly HashSet<IMyCubeGrid> StealthedGrids = new HashSet<IMyCubeGrid>();
 
         internal Settings ConfigSettings;
         internal APIBackend API;
@@ -79,9 +79,9 @@ namespace StealthSystem
         internal bool Inited;
         internal bool PbApiInited;
 
-        private List<MyEntity> _entities;
-        private ConcurrentCachingList<IMyUpgradeModule> _startBlocks;
-        private ConcurrentCachingList<IMyCubeGrid> _startGrids;
+        private readonly List<MyEntity> _entities = new List<MyEntity>();
+        private readonly ConcurrentCachingList<IMyUpgradeModule> _startBlocks = new ConcurrentCachingList<IMyUpgradeModule>();
+        private readonly ConcurrentCachingList<IMyCubeGrid> _startGrids = new ConcurrentCachingList<IMyCubeGrid>();
         private readonly Stack<GroupMap> _groupMapPool = new Stack<GroupMap>(64);
         private readonly Stack<GridComp> _gridCompPool = new Stack<GridComp>(128);
 
@@ -92,6 +92,28 @@ namespace StealthSystem
         {
             API = new APIBackend(this);
             APIServer = new APIServer(this);
+        }
+
+        private void Clean()
+        {
+            STEALTH_BLOCKS.Clear();
+            HEAT_BLOCKS.Clear();
+            SHIELD_BLOCKS.Clear();
+
+            DriveMap.Clear();
+            GridMap.Clear();
+            GridGroupMap.Clear();
+            GridList.Clear();
+            StealthedGrids.Clear();
+
+            _entities.Clear();
+            _startBlocks.ClearImmediate();
+            _startGrids.ClearImmediate();
+            _groupMapPool.Clear();
+            _gridCompPool.Clear();
+
+            _customControls.Clear();
+            _customActions.Clear();
         }
     }
 }

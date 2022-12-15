@@ -92,9 +92,9 @@ namespace StealthSystem
 
             Block = stealthBlock;
 
-            Transparency = -StealthSession.Transparency;
+            Transparency = -_session.Transparency;
 
-            if (!StealthSession.WcActive)
+            if (!_session.WcActive)
             {
                 NearbyTurrets = new List<IMyLargeTurretBase>();
                 _entities = new List<MyEntity>();
@@ -127,7 +127,7 @@ namespace StealthSystem
 
             Repo.Sync(this);
 
-            Block.Storage[StealthSession.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Repo));
+            Block.Storage[_session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Repo));
 
             return false;
         }
@@ -167,7 +167,7 @@ namespace StealthSystem
             Block.EnabledChanged += EnabledChanged;
             Source.SystemChanged += SourceChanged;
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
             {
                 GetShowInToolbarSwitch();
                 Block.AppendingCustomInfo += AppendingCustomData;
@@ -211,7 +211,7 @@ namespace StealthSystem
                         continue;
                     }
 
-                    if (!StealthSession.IsDedicated)
+                    if (!_session.IsDedicated)
                     {
                         if (entity is IMyCubeGrid)
                             StealthExternalGrid(false, entity as IMyCubeGrid);
@@ -219,14 +219,14 @@ namespace StealthSystem
                             entity.Render.Visible = true;
                     }
 
-                    entity.Flags ^= StealthSession.StealthFlag;
+                    entity.Flags ^= _session.StealthFlag;
                 }
             }
 
             if (HeatSignature != null)
                 MyAPIGateway.Session.GPS.RemoveLocalGps(HeatSignature);
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
                 Block.AppendingCustomInfo -= AppendingCustomData;
 
             if (!MyAPIGateway.Session.IsServer)
@@ -430,7 +430,7 @@ namespace StealthSystem
             SufficientPower = StealthActive ? available >= 0 : available >= RequiredPower;
             Online = Block.IsFunctional && Block.Enabled && available > 0;
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
                 SetEmissiveColor(gridChange);
         }
 
@@ -466,8 +466,8 @@ namespace StealthSystem
             var areaMetres = (int)OBBSurfaceArea(ExpandedOBB);
             SurfaceArea = (int)(areaMetres / scale);
 
-            RequiredPower = areaMetres * StealthSession.PowerScale;
-            SignalDistance = (int)(RequiredPower * StealthSession.SignalRangeScale);
+            RequiredPower = areaMetres * _session.PowerScale;
+            SignalDistance = (int)(RequiredPower * _session.SignalRangeScale);
             SignalDistanceSquared = SignalDistance * SignalDistance;
 
         }
@@ -551,8 +551,8 @@ namespace StealthSystem
 
                 if (set)
                 {
-                    grid.Flags |= StealthSession.StealthFlag;
-                    StealthSession.StealthedGrids.Add(grid);
+                    grid.Flags |= _session.StealthFlag;
+                    _session.StealthedGrids.Add(grid);
 
                     if (GridComp.DisableShields)
                         DisableShields(comp);
@@ -562,17 +562,17 @@ namespace StealthSystem
                 }
                 else
                 {
-                    grid.Flags ^= StealthSession.StealthFlag;
-                    StealthSession.StealthedGrids.Remove(grid);
+                    grid.Flags ^= _session.StealthFlag;
+                    _session.StealthedGrids.Remove(grid);
 
                     if (GridComp.DisableWeapons)
                         ReEnableTurrets(comp);
                 }
             }
 
-            if (!set && StealthSession.DisableShields)
+            if (!set && _session.DisableShields)
             {
-                ShieldWait = StealthSession.ShieldDelay;
+                ShieldWait = _session.ShieldDelay;
                 ShieldWaiting = true;
             }
 
@@ -660,7 +660,7 @@ namespace StealthSystem
             if (stealth)
             {
                 var antiAliasEnabled = (uint)MyAPIGateway.Session?.Config?.AntialiasingMode == 1u;
-                Transparency = antiAliasEnabled ? -StealthSession.Transparency : -1f;
+                Transparency = antiAliasEnabled ? -_session.Transparency : -1f;
                 TransOffset = antiAliasEnabled ? -0.35f : -0.2f;
 
                 JumpDrives.Clear();
@@ -670,7 +670,7 @@ namespace StealthSystem
 
             if (fade)
             {
-                var steps = StealthSession.FadeSteps;
+                var steps = _session.FadeSteps;
                 float fraction = (stealth ? 1 : steps - 1) / (float)steps;
                 dither = TransOffset + fraction * (Transparency - TransOffset);
 
@@ -740,7 +740,7 @@ namespace StealthSystem
 
             if (fade)
             {
-                Fade = Fading ? StealthSession.FadeTime - Fade : StealthSession.FadeTime;
+                Fade = Fading ? _session.FadeTime - Fade : _session.FadeTime;
                 Fading = true;
             }
 
@@ -783,7 +783,7 @@ namespace StealthSystem
 
         internal void FadeBlocks(bool fadeOut, int step)
         {
-            var steps = StealthSession.FadeSteps;
+            var steps = _session.FadeSteps;
             var fraction = (fadeOut ? steps - step : step) / (float)steps;
             var reset = !fadeOut && step == 0;
             var dither = reset? 0f : TransOffset + fraction * (Transparency - TransOffset);
@@ -929,7 +929,7 @@ namespace StealthSystem
             {
                 Block.Storage = new MyModStorageComponent();
             }
-            else if (Block.Storage.TryGetValue(StealthSession.CompDataGuid, out rawData))
+            else if (Block.Storage.TryGetValue(_session.CompDataGuid, out rawData))
             {
                 try
                 {

@@ -76,8 +76,8 @@ namespace StealthSystem
             Grid.OnBlockAdded += BlockAdded;
             Grid.OnBlockRemoved += BlockRemoved;
 
-            DisableShields = StealthSession.DisableShields;
-            DisableWeapons = StealthSession.DisableWeapons && !StealthSession.WcActive;
+            DisableShields = _session.DisableShields;
+            DisableWeapons = _session.DisableWeapons && !_session.WcActive;
 
             if (DisableWeapons) Turrets = new List<IMyUserControllableGun>();
 
@@ -85,7 +85,7 @@ namespace StealthSystem
             if (group != null)
             {
                 GroupMap map;
-                if (StealthSession.GridGroupMap.TryGetValue(group, out map))
+                if (_session.GridGroupMap.TryGetValue(group, out map))
                     GroupMap = map;
             }
             else Logs.WriteLine("group null at GridComp.Init()");
@@ -99,7 +99,7 @@ namespace StealthSystem
             {
                 if (block?.BlockDefinition == null) continue;
 
-                if (DisableShields && StealthSession.SHIELD_BLOCKS.Contains(block.BlockDefinition.SubtypeName))
+                if (DisableShields && _session.SHIELD_BLOCKS.Contains(block.BlockDefinition.SubtypeName))
                     ShieldBlocks.Add(block as IMyFunctionalBlock);
 
                 if (DisableWeapons && block is IMyUserControllableGun)
@@ -115,7 +115,7 @@ namespace StealthSystem
             if (fat is IMyUpgradeModule)
             {
                 var module = fat as IMyUpgradeModule;
-                if (StealthSession.STEALTH_BLOCKS.Contains(module.BlockDefinition.SubtypeName))
+                if (_session.STEALTH_BLOCKS.Contains(module.BlockDefinition.SubtypeName))
                 {
                     if (!_session.DriveMap.ContainsKey(module.EntityId))
                     {
@@ -150,7 +150,7 @@ namespace StealthSystem
                 }
             }
 
-            if (DisableShields && StealthSession.SHIELD_BLOCKS.Contains(fat.BlockDefinition.SubtypeName))
+            if (DisableShields && _session.SHIELD_BLOCKS.Contains(fat.BlockDefinition.SubtypeName))
                 ShieldBlocks.Add(fat as IMyFunctionalBlock);
 
             if (DisableWeapons && fat is IMyUserControllableGun)
@@ -245,9 +245,9 @@ namespace StealthSystem
                     {
                         if (((uint)newSubgrid.Flags & 0x1000000) > 0) continue; //Other grid already stealthed
 
-                        newSubgrid.Flags |= StealthSession.StealthFlag;
+                        newSubgrid.Flags |= _session.StealthFlag;
 
-                        if (!StealthSession.IsDedicated && !thisMaster.VisibleToClient)
+                        if (!_session.IsDedicated && !thisMaster.VisibleToClient)
                             StealthConnectedGrid(newSubgrid, thisMaster, true);
 
                         //continue;
@@ -272,9 +272,9 @@ namespace StealthSystem
 
                     if (subgridMaster.StealthActive) //Other grid has active drive so stealth this grid
                     {
-                        grid.Flags |= StealthSession.StealthFlag;
+                        grid.Flags |= _session.StealthFlag;
 
-                        if (!StealthSession.IsDedicated && !subgridMaster.VisibleToClient)
+                        if (!_session.IsDedicated && !subgridMaster.VisibleToClient)
                             StealthConnectedGrid(grid, subgridMaster, true);
 
                         if (gridComp.DisableShields)
@@ -325,9 +325,9 @@ namespace StealthSystem
 
                     if (thisActive) //Unstealth previously connected grid since this grid was providing stealth
                     {
-                        formerSubgrid.Flags ^= StealthSession.StealthFlag;
+                        formerSubgrid.Flags ^= _session.StealthFlag;
 
-                        if (!StealthSession.IsDedicated)
+                        if (!_session.IsDedicated)
                             StealthConnectedGrid(formerSubgrid, thisMaster, false);
                     }
 
@@ -353,9 +353,9 @@ namespace StealthSystem
 
                     if (subgridMaster.StealthActive) //Connected grid was providing stealth so destealth this
                     {
-                        grid.Flags ^= StealthSession.StealthFlag;
+                        grid.Flags ^= _session.StealthFlag;
 
-                        if (!StealthSession.IsDedicated)
+                        if (!_session.IsDedicated)
                             StealthConnectedGrid(grid, subgridMaster, false);
 
                         if (gridComp.DisableShields)
@@ -377,12 +377,12 @@ namespace StealthSystem
 
         internal void StealthConnectedGrid(IMyCubeGrid grid, DriveComp comp, bool stealth)
         {
-            if (stealth) StealthSession.StealthedGrids.Add(grid);
-            else StealthSession.StealthedGrids.Remove(grid);
+            if (stealth) _session.StealthedGrids.Add(grid);
+            else _session.StealthedGrids.Remove(grid);
 
             grid.GetBlocks(SlimBlocks);
 
-            var dither = stealth ? StealthSession.Transparency : 0f;
+            var dither = stealth ? _session.Transparency : 0f;
             foreach (var slim in SlimBlocks)
             {
                 var fatBlock = slim.FatBlock;

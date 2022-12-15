@@ -22,10 +22,10 @@ namespace StealthSystem
         internal bool Tick60;
         internal bool Tick120;
         internal bool Tick600;
-        internal static bool IsServer;
-        internal static bool IsClient;
-        internal static bool IsDedicated;
-        internal static bool WcActive;
+        internal bool IsServer;
+        internal bool IsClient;
+        internal bool IsDedicated;
+        internal bool WcActive;
 
         private bool FirstRun = true;
 
@@ -35,15 +35,9 @@ namespace StealthSystem
             IsClient = MyAPIGateway.Multiplayer.MultiplayerActive && !MyAPIGateway.Session.IsServer;
             IsDedicated = MyAPIGateway.Utilities.IsDedicated;
 
-            GridGroupMap = new Dictionary<IMyGridGroupData, GroupMap>();
-            GridList = new List<GridComp>();
-            StealthedGrids = new HashSet<IMyCubeGrid>();
             LargeBox = new BoundingBoxD(-_large, _large);
             SmallBox = new BoundingBoxD(-_small, _small);
 
-            _entities = new List<MyEntity>();
-            _startBlocks = new ConcurrentCachingList<IMyUpgradeModule>();
-            _startGrids = new ConcurrentCachingList<IMyCubeGrid>();
             Logs.InitLogs();
 
             ModPath = ModContext.ModPath;
@@ -72,7 +66,7 @@ namespace StealthSystem
             if (!IsClient)
                 MyAPIGateway.Session.DamageSystem.RegisterAfterDamageHandler(0, AfterDamageApplied);
 
-            ConfigSettings = new Settings();
+            ConfigSettings = new Settings(this);
 
             APIServer.Load();
         }
@@ -118,7 +112,6 @@ namespace StealthSystem
             }
 
             MyEntities.OnEntityCreate -= OnEntityCreate;
-            //MyEntities.OnEntityDelete -= OnEntityDelete;
             MyEntities.OnCloseAll -= OnCloseAll;
             MyAPIGateway.TerminalControls.CustomControlGetter -= CustomControlGetter;
             MyAPIGateway.TerminalControls.CustomActionGetter -= CustomActionGetter;
@@ -126,10 +119,7 @@ namespace StealthSystem
             Logs.Close();
             APIServer.Unload();
 
-            _groupMapPool.Clear();
-            _gridCompPool.Clear();
-            _customControls = null;
-            _customActions = null;
+            Clean();
         }
 
     }

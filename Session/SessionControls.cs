@@ -8,8 +8,8 @@ namespace StealthSystem
 {
     public partial class StealthSession
     {
-        private static List<IMyTerminalControl> _customControls = new List<IMyTerminalControl>();
-        private static List<IMyTerminalAction> _customActions = new List<IMyTerminalAction>();
+        private readonly List<IMyTerminalControl> _customControls = new List<IMyTerminalControl>();
+        private readonly List<IMyTerminalAction> _customActions = new List<IMyTerminalAction>();
 
         internal IMyTerminalBlock LastTerminal;
 

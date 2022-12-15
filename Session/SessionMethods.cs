@@ -169,7 +169,7 @@ namespace StealthSystem
             return false;
         }
 
-        internal static void UpdateEnforcement(StealthSettings settings)
+        internal void UpdateEnforcement(StealthSettings settings)
         {
             JumpPenalty = settings.JumpPenalty;
             Transparency = settings.Transparency;

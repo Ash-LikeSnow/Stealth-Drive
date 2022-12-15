@@ -7,13 +7,17 @@ namespace StealthSystem
 {
     internal class Settings
     {
+        private readonly StealthSession _session;
+
         internal const string CONFIG_FILE = "StealthMod.cfg";
         internal const int CONFIG_VERSION = 7;
 
         internal StealthSettings Config;
 
-        internal Settings()
+        internal Settings(StealthSession session)
         {
+            _session = session;
+
             LoadConfig();
         }
 
@@ -44,7 +48,7 @@ namespace StealthSystem
                 }
                 else GenerateConfig();
 
-                StealthSession.UpdateEnforcement(Config);
+                _session.UpdateEnforcement(Config);
             }
             catch (Exception ex)
             {

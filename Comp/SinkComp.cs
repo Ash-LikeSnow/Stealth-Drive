@@ -63,7 +63,7 @@ namespace StealthSystem
 
             Repo.Sync(this);
 
-            Block.Storage[StealthSession.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Repo));
+            Block.Storage[_session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Repo));
 
             return false;
         }
@@ -86,7 +86,7 @@ namespace StealthSystem
 
             Inited = true;
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
             {
                 GetShowInToolbarSwitch();
                 Block.AppendingCustomInfo += AppendingCustomData;
@@ -102,7 +102,7 @@ namespace StealthSystem
 
             Source.SystemChanged -= SourceChanged;
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
                 Block.AppendingCustomInfo -= AppendingCustomData;
 
             Clean();
@@ -172,7 +172,7 @@ namespace StealthSystem
             //SufficientPower = StealthActive ? available >= 0 : available >= RequiredPower;
             //Online = Block.IsFunctional && Block.Enabled && available > 0;
 
-            if (!StealthSession.IsDedicated)
+            if (!_session.IsDedicated)
                 SetEmissiveColor();
         }
 
@@ -194,7 +194,7 @@ namespace StealthSystem
         internal void DamageBlocks()
         {
             var large = Grid.GridSizeEnum == MyCubeSize.Large;
-            var box = large ? StealthSession.LargeBox : StealthSession.SmallBox;
+            var box = large ? _session.LargeBox : _session.SmallBox;
             var radius = large ? 7.25 : 6.45;
             var offset = large ? 7.75 : 7.25;
             var matrix = Block.WorldMatrix;
@@ -288,7 +288,7 @@ namespace StealthSystem
             if (!Working)
                 return 0f;
             if (Accumulating)
-                return StealthSession.SinkPower;
+                return _session.SinkPower;
             return 0.001f;
         }
 
@@ -316,7 +316,7 @@ namespace StealthSystem
             {
                 Block.Storage = new MyModStorageComponent();
             }
-            else if (Block.Storage.TryGetValue(StealthSession.CompDataGuid, out rawData))
+            else if (Block.Storage.TryGetValue(_session.CompDataGuid, out rawData))
             {
                 try
                 {
