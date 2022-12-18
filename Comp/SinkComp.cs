@@ -25,6 +25,8 @@ namespace StealthSystem
 
         internal SinkRepo Repo;
         internal DriveComp Master;
+        internal Definitions.SinkDefinition Definition;
+
         internal Color OldColour;
         internal MyOrientedBoundingBoxD DamageBox;
         internal MyOrientedBoundingBoxD BlockBox;
@@ -43,11 +45,12 @@ namespace StealthSystem
 
         private StealthSession _session;
 
-        internal SinkComp(IMyFunctionalBlock sinkBlock, StealthSession session)
+        internal SinkComp(IMyFunctionalBlock sinkBlock, Definitions.SinkDefinition def, StealthSession session)
         {
             _session = session;
 
             Block = sinkBlock;
+            Definition = def;
         }
 
         public override void OnBeforeRemovedFromContainer()
@@ -288,7 +291,7 @@ namespace StealthSystem
             if (!Working)
                 return 0f;
             if (Accumulating)
-                return _session.SinkPower;
+                return Definition.Power;
             return 0.001f;
         }
 

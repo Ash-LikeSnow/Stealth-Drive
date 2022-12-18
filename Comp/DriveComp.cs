@@ -28,6 +28,7 @@ namespace StealthSystem
 
         internal DriveRepo Repo;
         internal GridComp GridComp;
+        internal Definitions.DriveDefinition Definition;
 
         //internal List<IMyCubeGrid> ConnectedGrids = new List<IMyCubeGrid>();
         internal List<IMySlimBlock> SlimBlocks = new List<IMySlimBlock>();
@@ -86,11 +87,12 @@ namespace StealthSystem
         private BoundingSphereD _sphere;
         private readonly Vector3D[] _obbCorners = new Vector3D[8];
 
-        internal DriveComp(IMyFunctionalBlock stealthBlock, StealthSession session)
+        internal DriveComp(IMyFunctionalBlock stealthBlock, Definitions.DriveDefinition def, StealthSession session)
         {
             _session = session;
 
             Block = stealthBlock;
+            Definition = def;
 
             Transparency = -_session.Transparency;
 
@@ -382,7 +384,13 @@ namespace StealthSystem
 
         private void AppendingCustomData(IMyTerminalBlock block, StringBuilder builder)
         {
-            var status = !IsPrimary ? "Standby" : !Online ? "Offline" : !SufficientPower ? "Insufficient Power" : CoolingDown ? "Cooling Down" : StealthActive ? "Stealth Engaged" : "Ready";
+            var status = !IsPrimary ? "Standby" 
+                : !Online ? "Offline" 
+                : !SufficientPower ? "Insufficient Power" 
+                : CoolingDown ? "Cooling Down" 
+                : !GridComp.WaterValid ? _session.WorkInWater ? "Not Submerged" : "Submerged" 
+                : StealthActive ? "Stealth Engaged" 
+                : "Ready";
 
             builder.Append("Drive Status: ")
                 .Append(status)
@@ -466,8 +474,8 @@ namespace StealthSystem
             var areaMetres = (int)OBBSurfaceArea(ExpandedOBB);
             SurfaceArea = (int)(areaMetres / scale);
 
-            RequiredPower = areaMetres * _session.PowerScale;
-            SignalDistance = (int)(RequiredPower * _session.SignalRangeScale);
+            RequiredPower = areaMetres * Definition.PowerScale;
+            SignalDistance = (int)(RequiredPower * Definition.SignalRangeScale);
             SignalDistanceSquared = SignalDistance * SignalDistance;
 
         }
@@ -645,7 +653,7 @@ namespace StealthSystem
 
         internal bool ToggleStealth(bool force = false)
         {
-            if (!Online || !StealthActive && !force && (!SufficientPower || CoolingDown)) return false;
+            if (!Online || !StealthActive && !force && (!SufficientPower || CoolingDown || !GridComp.WaterValid)) return false;
 
             EnterStealth = !StealthActive;
             ExitStealth = StealthActive;
@@ -693,7 +701,7 @@ namespace StealthSystem
                         if (fade) FadeSlims.Add(slim);
                         continue;
                     }
-                    if (fatBlock is MyThrust)
+                    if (fatBlock is MyThrust && _session.HideThrusterFlames)
                     {
                         var thrust = (MyThrust)fatBlock;
                         if (stealth)
@@ -801,7 +809,7 @@ namespace StealthSystem
 
                 if (!Fading) //Final step
                 {
-                    if (!fadeOut && entity is MyThrust)
+                    if (!fadeOut && entity is MyThrust && _session.HideThrusterFlames)
                         (entity as MyThrust).Render.UpdateFlameAnimatorData();
                 }
 

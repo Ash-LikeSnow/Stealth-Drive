@@ -1,12 +1,9 @@
 ﻿using Sandbox.ModAPI;
 using VRage.Game.Components;
-using VRage.Game.ModAPI;
 using VRageMath;
 using Sandbox.Game.Entities;
-using VRage.Game.Entity;
-using System.Collections.Generic;
-using VRage.Collections;
 using Sandbox.Game;
+using VRage.Game;
 
 namespace StealthSystem
 {
@@ -22,12 +19,11 @@ namespace StealthSystem
         internal bool Tick60;
         internal bool Tick120;
         internal bool Tick600;
+        internal bool Tick3600;
         internal bool IsServer;
         internal bool IsClient;
         internal bool IsDedicated;
-        internal bool WcActive;
-
-        private bool FirstRun = true;
+        internal bool PlayersLoaded;
 
         public override void LoadData()
         {
@@ -41,7 +37,7 @@ namespace StealthSystem
             Logs.InitLogs();
 
             ModPath = ModContext.ModPath;
-            WcActive = ModCheck();
+            ModCheck();
 
             //RemoveEdges();
             CreateTerminalControls<IMyUpgradeModule>();
@@ -69,6 +65,9 @@ namespace StealthSystem
             ConfigSettings = new Settings(this);
 
             APIServer.Load();
+
+            if (WaterMod)
+                WaterAPI.Register();
         }
 
         public override void UpdateAfterSimulation()
@@ -84,21 +83,18 @@ namespace StealthSystem
             Tick60 = TickMod60 == 0;
             Tick120 = Tick % 120 == 0;
             Tick600 = Tick % 600 == 0;
+            Tick3600 = Tick % 3600 == 0;
 
-            CompLoop();
+            if (!PlayersLoaded && IsServer && PlayerInit())
+                PlayersLoaded = true;
 
-            if (!_startBlocks.IsEmpty || !_startGrids.IsEmpty)
+            if (TrackWater && (Tick3600 || Tick60 && WaterMap.IsEmpty))
+                UpdateWaters();
+
+            if (Enforced && (!_startBlocks.IsEmpty || !_startGrids.IsEmpty))
                 StartComps();
 
-            //if (MyAPIGateway.Input.IsNewKeyPressed(MyKeys.J))
-            //    Logs.CheckGrid();
-
-            if (FirstRun)
-            {
-                if (IsServer && !IsDedicated)
-                    InitPlayers();
-                FirstRun = false;
-            }
+            CompLoop();
         }
 
         protected override void UnloadData()
@@ -113,13 +109,21 @@ namespace StealthSystem
 
             MyEntities.OnEntityCreate -= OnEntityCreate;
             MyEntities.OnCloseAll -= OnCloseAll;
+            
             MyAPIGateway.TerminalControls.CustomControlGetter -= CustomControlGetter;
             MyAPIGateway.TerminalControls.CustomActionGetter -= CustomActionGetter;
 
             Logs.Close();
             APIServer.Unload();
+            if (WaterMod)
+                WaterAPI.Unregister();
 
             Clean();
+        }
+
+        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
+        {
+            return base.GetObjectBuilder();
         }
 
     }

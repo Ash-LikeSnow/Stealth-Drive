@@ -15,7 +15,7 @@ namespace StealthSystem
 
         private void CustomControlGetter(IMyTerminalBlock block, List<IMyTerminalControl> controls)
         {
-            if (block is IMyUpgradeModule && STEALTH_BLOCKS.Contains(block.BlockDefinition.SubtypeName))
+            if (block is IMyUpgradeModule && DriveDefinitions.ContainsKey(block.BlockDefinition.SubtypeName))
             {
                 foreach (var control in _customControls)
                     controls.Add(control);
@@ -26,7 +26,7 @@ namespace StealthSystem
 
         private void CustomActionGetter(IMyTerminalBlock block, List<IMyTerminalAction> actions)
         {
-            if (block is IMyUpgradeModule && STEALTH_BLOCKS.Contains(block.BlockDefinition.SubtypeName))
+            if (block is IMyUpgradeModule && DriveDefinitions.ContainsKey(block.BlockDefinition.SubtypeName))
             {
                 foreach (var action in _customActions)
                     actions.Add(action);
@@ -130,7 +130,7 @@ namespace StealthSystem
                 return false;
             }
 
-            return comp.Online && comp.SufficientPower && !comp.CoolingDown && !comp.StealthActive;
+            return comp.Online && comp.SufficientPower && !comp.CoolingDown && !comp.StealthActive && comp.GridComp.WaterValid;
         }
 
         internal bool CanExitStealth(IMyTerminalBlock block)
@@ -199,7 +199,7 @@ namespace StealthSystem
                 return;
             }
 
-            if (!comp.Online || !comp.SufficientPower || comp.CoolingDown || comp.StealthActive)
+            if (!comp.Online || !comp.SufficientPower || comp.CoolingDown || comp.StealthActive || !comp.GridComp.WaterValid)
                 return;
 
             comp.EnterStealth = true;

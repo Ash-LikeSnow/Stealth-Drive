@@ -4,6 +4,8 @@ using System;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using System.Collections.Generic;
+using VRageMath;
+using Sandbox.Game.Entities;
 
 namespace StealthSystem
 {
@@ -45,6 +47,20 @@ namespace StealthSystem
 
     }
 
+    internal class WaterData
+    {
+        public WaterData(MyPlanet planet)
+        {
+            Planet = planet;
+            WaterId = planet.EntityId;
+        }
+
+        internal MyPlanet Planet;
+        internal long WaterId;
+        internal Vector3D Centre;
+        internal float Radius;
+    }
+
     internal class GridComp
     {
         internal List<DriveComp> StealthComps = new List<DriveComp>();
@@ -56,9 +72,13 @@ namespace StealthSystem
         internal DriveComp MasterComp;
         internal GroupMap GroupMap;
         internal IMyCubeGrid Grid;
+        internal MyPlanet Planet;
+        internal BoundingSphereD Water;
 
         internal bool GroupsDirty;
         internal bool Revealed;
+        internal bool Underwater;
+        internal bool WaterValid = true;
         internal bool DisableShields;
         internal bool DisableWeapons;
 
@@ -99,11 +119,44 @@ namespace StealthSystem
             {
                 if (block?.BlockDefinition == null) continue;
 
-                if (DisableShields && _session.SHIELD_BLOCKS.Contains(block.BlockDefinition.SubtypeName))
+                if (DisableShields && _session.ShieldBlocks.Contains(block.BlockDefinition.SubtypeName))
                     ShieldBlocks.Add(block as IMyFunctionalBlock);
 
                 if (DisableWeapons && block is IMyUserControllableGun)
                     Turrets.Add(block as IMyUserControllableGun);
+            }
+
+            if (_session.TrackWater)
+            {
+                Planet = MyGamePruningStructure.GetClosestPlanet(Grid.PositionComp.WorldAABB.Center);
+
+                WaterData waterData;
+                if (Planet != null && _session.WaterMap.TryGetValue(Planet.EntityId, out waterData))
+                {
+                    Water = new BoundingSphereD(waterData.Centre, waterData.Radius + _session.WaterTransitionDepth);
+
+                    var planetVector = Grid.PositionComp.WorldAABB.Center - waterData.Centre;
+                    var radius = waterData.Radius + _session.WaterTransitionDepth;
+                    var radiusSqr = radius * radius;
+                    if (planetVector.LengthSquared() < radiusSqr)
+                    {
+                        Underwater = true;
+
+                        var obb = new MyOrientedBoundingBoxD(Grid.PositionComp.LocalAABB, Grid.PositionComp.WorldMatrixRef);
+                        obb.GetCorners(_session.ObbCorners, 0);
+                        for (int j = 0; j < 8; j++)
+                        {
+                            var corner = _session.ObbCorners[j];
+                            planetVector = corner = waterData.Centre;
+                            if (planetVector.LengthSquared() > radiusSqr)
+                            {
+                                Underwater = false;
+                                break;
+                            }
+                        }
+                    }
+                    WaterValid = Underwater == _session.WorkInWater;
+                }
             }
         }
 
@@ -115,7 +168,7 @@ namespace StealthSystem
             if (fat is IMyUpgradeModule)
             {
                 var module = fat as IMyUpgradeModule;
-                if (_session.STEALTH_BLOCKS.Contains(module.BlockDefinition.SubtypeName))
+                if (_session.DriveDefinitions.ContainsKey(module.BlockDefinition.SubtypeName))
                 {
                     if (!_session.DriveMap.ContainsKey(module.EntityId))
                     {
@@ -150,7 +203,7 @@ namespace StealthSystem
                 }
             }
 
-            if (DisableShields && _session.SHIELD_BLOCKS.Contains(fat.BlockDefinition.SubtypeName))
+            if (DisableShields && _session.ShieldBlocks.Contains(fat.BlockDefinition.SubtypeName))
                 ShieldBlocks.Add(fat as IMyFunctionalBlock);
 
             if (DisableWeapons && fat is IMyUserControllableGun)

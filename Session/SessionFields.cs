@@ -8,6 +8,9 @@ using VRage.Game.Entity;
 using System.Collections.Generic;
 using VRage.Collections;
 using Jakaria.API;
+using System.Collections.Concurrent;
+using Sandbox.Game.Entities;
+using Sandbox.Definitions;
 
 namespace StealthSystem
 {
@@ -18,12 +21,10 @@ namespace StealthSystem
 
         internal const int FADE_INTERVAL = 5;
 
-        internal readonly HashSet<string> STEALTH_BLOCKS = new HashSet<string>()
-        {"StealthDrive", "StealthDriveSmall"};
-        internal readonly HashSet<string> HEAT_BLOCKS = new HashSet<string>()
-        {"StealthHeatSink", "StealthHeatSinkSmall"};
+        internal readonly Dictionary<string, Definitions.DriveDefinition> DriveDefinitions = new Dictionary<string, Definitions.DriveDefinition>();
+        internal readonly Dictionary<string, Definitions.SinkDefinition> SinkDefinitions = new Dictionary<string, Definitions.SinkDefinition>();
 
-        internal readonly HashSet<string> SHIELD_BLOCKS = new HashSet<string>()
+        internal readonly HashSet<string> ShieldBlocks = new HashSet<string>()
         {
             "EmitterL",
             "EmitterS",
@@ -49,26 +50,29 @@ namespace StealthSystem
 
         internal EntityFlags StealthFlag;
 
-        internal int BaseDuration;
-        internal int SinkDuration;
         internal int ShieldDelay;
         internal int JumpPenalty;
         internal int FadeTime;
         internal int FadeSteps;
         internal int DamageThreshold;
-        internal float PowerScale;
-        internal float SignalRangeScale;
-        internal float SinkPower;
         internal float Transparency;
-        internal bool DoDamage;
+        internal float WaterTransitionDepth;
+        internal float WaterOffsetSqr;
         internal bool DisableShields;
         internal bool DisableWeapons;
+        internal bool HideThrusterFlames;
+        internal bool WorkInWater;
+        internal bool WorkOutOfWater;
+        internal bool TrackWater;
+        internal bool TrackDamage;
+        internal bool RevealOnDamage;
 
         internal readonly Dictionary<long, DriveComp> DriveMap = new Dictionary<long, DriveComp>();
         internal readonly Dictionary<IMyCubeGrid, GridComp> GridMap = new Dictionary<IMyCubeGrid, GridComp>();
         internal readonly Dictionary<IMyGridGroupData, GroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GroupMap>();
         internal readonly List<GridComp> GridList = new List<GridComp>();
         internal readonly HashSet<IMyCubeGrid> StealthedGrids = new HashSet<IMyCubeGrid>();
+        internal readonly Vector3D[] ObbCorners = new Vector3D[8];
 
         internal Settings ConfigSettings;
         internal APIBackend API;
@@ -76,8 +80,16 @@ namespace StealthSystem
         internal readonly WaterModAPI WaterAPI = new WaterModAPI();
 
         internal object InitObj = new object();
+        internal bool Enforced;
         internal bool Inited;
         internal bool PbApiInited;
+
+        internal bool WcActive;
+        internal bool WaterMod;
+
+        internal readonly ConcurrentDictionary<long, WaterData> WaterMap = new ConcurrentDictionary<long, WaterData>();
+        internal readonly ConcurrentDictionary<long, MyPlanet> PlanetMap = new ConcurrentDictionary<long, MyPlanet>();
+        internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
 
         private readonly List<MyEntity> _entities = new List<MyEntity>();
         private readonly ConcurrentCachingList<IMyUpgradeModule> _startBlocks = new ConcurrentCachingList<IMyUpgradeModule>();
@@ -96,9 +108,9 @@ namespace StealthSystem
 
         private void Clean()
         {
-            STEALTH_BLOCKS.Clear();
-            HEAT_BLOCKS.Clear();
-            SHIELD_BLOCKS.Clear();
+            DriveDefinitions.Clear();
+            SinkDefinitions.Clear();
+            ShieldBlocks.Clear();
 
             DriveMap.Clear();
             GridMap.Clear();

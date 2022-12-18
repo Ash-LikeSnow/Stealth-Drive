@@ -140,6 +140,48 @@ namespace StealthSystem
                             comp.GridUpdated = false;
                         }
 
+                        if (TrackWater)
+                        {
+                            WaterData waterData;
+                            if (Tick3600)
+                            {
+                                var planet = MyGamePruningStructure.GetClosestPlanet(gridComp.Grid.PositionComp.WorldAABB.Center);
+
+                                if (planet != gridComp.Planet && planet != null && WaterMap.TryGetValue(planet.EntityId, out waterData))
+                                    gridComp.Water = new BoundingSphereD(waterData.Centre, waterData.Radius + WaterTransitionDepth);
+
+                                gridComp.Planet = planet;
+                            }
+
+                            if (Tick60 && gridComp.Planet != null && WaterMap.TryGetValue(gridComp.Planet.EntityId, out waterData))
+                            {
+                                gridComp.Underwater = false;
+
+                                var planetVector = gridComp.Grid.PositionComp.WorldAABB.Center - waterData.Centre;
+                                var radius = waterData.Radius + WaterTransitionDepth;
+                                var radiusSqr = radius * radius;
+                                if (planetVector.LengthSquared() < radiusSqr)
+                                {
+                                    gridComp.Underwater = true;
+
+                                    var obb = new MyOrientedBoundingBoxD(gridComp.Grid.PositionComp.LocalAABB, gridComp.Grid.PositionComp.WorldMatrixRef);
+                                    obb.GetCorners(ObbCorners, 0);
+                                    for (int k = 0; k < 8; k++)
+                                    {
+                                        var corner = ObbCorners[j];
+                                        planetVector = corner - waterData.Centre;
+
+                                        if (planetVector.LengthSquared() > radiusSqr)
+                                        {
+                                            gridComp.Underwater = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                                gridComp.WaterValid = gridComp.Underwater == WorkInWater;
+                            }
+                        }
+
                         //Update comp state and refresh custom info
                         if (Tick20 || comp.PowerDirty)
                         {
@@ -151,7 +193,7 @@ namespace StealthSystem
                         if (comp.StealthActive)
                         {
                             //Exit stealth conditions
-                            var forcedExit = !comp.IsPrimary || !comp.Online || gridComp.Revealed || gridComp.DamageTaken > DamageThreshold;
+                            var forcedExit = !comp.IsPrimary || !comp.Online || gridComp.Revealed || !gridComp.WaterValid || TrackDamage && gridComp.DamageTaken > DamageThreshold;
                             if (forcedExit || !comp.IgnorePower && (!comp.SufficientPower || comp.TimeElapsed++ >= comp.TotalTime)) //comp.RemainingDuration-- <= 0
                                 comp.ExitStealth = true;
 
@@ -195,7 +237,6 @@ namespace StealthSystem
                                 }
                             }
                         }
-
 
                         //if (comp.ExpandedOBB != null) DrawBox(comp.ExpandedOBB, Color.AliceBlue);
 
@@ -384,7 +425,7 @@ namespace StealthSystem
                 if (Tick20)
                 {
                     if (master != null)
-                        master.MaxDuration = BaseDuration + gridComp.SinkBonus;
+                        master.MaxDuration = master.Definition.Duration + gridComp.SinkBonus;
 
                         gridComp.SinkBonus = 0;
                 }
@@ -441,7 +482,7 @@ namespace StealthSystem
                         {
                             if (master.StealthActive)
                             {
-                                var timeChange = comp.Working ? SinkDuration : -SinkDuration;
+                                var timeChange = comp.Working ? comp.Definition.Duration : -comp.Definition.Duration;
                                 master.TotalTime += timeChange;
 
                                 comp.Accumulating = comp.Working;
@@ -463,7 +504,7 @@ namespace StealthSystem
                                 if (!IsClient) comp.DamageBlocks();
                             }
 
-                            gridComp.SinkBonus += SinkDuration;
+                            gridComp.SinkBonus += comp.Definition.Duration;
 
                             //if (master != null)
                                 //master.MaxDuration += SinkDuration;
@@ -480,13 +521,13 @@ namespace StealthSystem
 
                             if (comp.HeatPercent > 0)
                             {
-                                var loss = (byte)(100 / (SinkDuration / 20f));
+                                var loss = (byte)(100 / (comp.Definition.Duration / 20f));
                                 if (loss >= comp.HeatPercent)
                                     comp.HeatPercent = 0;
                                 else
                                     comp.HeatPercent -= loss;
 
-                                if (!IsClient) comp.DamageBlocks();
+                                if (!IsClient && comp.Definition.DoDamage) comp.DamageBlocks();
                                 //do heat signature
                             }
                         }
@@ -542,18 +583,23 @@ namespace StealthSystem
 
                     var gridData = GridMap[module.CubeGrid];
 
-                    if (STEALTH_BLOCKS.Contains(module.BlockDefinition.SubtypeName))
+                    Definitions.DriveDefinition dDef;
+                    if (DriveDefinitions.TryGetValue(module.BlockDefinition.SubtypeName, out dDef))
                     {
                         if (DriveMap.ContainsKey(module.EntityId)) continue;
 
-                        var comp = new DriveComp(module, this);
+                        var comp = new DriveComp(module, dDef, this);
                         DriveMap[module.EntityId] = comp;
                         gridData.StealthComps.Add(comp);
                         comp.Init();
+
+                        continue;
                     }
-                    else
+
+                    Definitions.SinkDefinition sDef;
+                    if (SinkDefinitions.TryGetValue(module.BlockDefinition.SubtypeName, out sDef))
                     {
-                        var comp = new SinkComp(module, this);
+                        var comp = new SinkComp(module, sDef, this);
                         gridData.HeatComps.Add(comp);
                         comp.Init();
                     }
