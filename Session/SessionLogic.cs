@@ -501,7 +501,7 @@ namespace StealthSystem
                             {
                                 //comp.HeatPercent = (byte)(100 * (master.RemainingDuration / (float)_duration));
                                 comp.HeatPercent = (byte)(100f * ((float)master.TimeElapsed / (float)master.TotalTime));
-                                if (!IsClient) comp.DamageBlocks();
+                                if (!IsClient && comp.Definition.DoDamage) comp.DamageBlocks();
                             }
 
                             gridComp.SinkBonus += comp.Definition.Duration;

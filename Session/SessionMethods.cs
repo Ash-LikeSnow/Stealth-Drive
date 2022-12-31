@@ -65,7 +65,7 @@ namespace StealthSystem
 
         internal void UpdateWaters()
         {
-            if (IsClient && PlayersLoaded)
+            if (IsClient && PlayersLoaded && MyAPIGateway.Session.Player?.Character != null)
             {
                 var character = MyAPIGateway.Session.Player.Character.PositionComp.WorldAABB.Center;
                 var closestPlanet = MyGamePruningStructure.GetClosestPlanet(character);
