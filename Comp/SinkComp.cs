@@ -233,12 +233,11 @@ namespace StealthSystem
                         MyOrientedBoundingBoxD blockBox;
                         if (fat == null)
                         {
-                            BoundingBoxD bBox;
-                            slim.GetWorldBoundingBox(out bBox);
+                            var gridSize = Grid.GridSize;
+                            var aabb = new BoundingBoxD(slim.Min * gridSize - gridSize / 2f, slim.Max * gridSize + gridSize / 2f);
 
                             var bMatrix = new MatrixD(grid.PositionComp.WorldMatrixRef);
-                            bMatrix.Translation = Vector3D.Zero;
-                            blockBox = new MyOrientedBoundingBoxD(bBox, bMatrix);
+                            blockBox = new MyOrientedBoundingBoxD(aabb, bMatrix);
                         }
                         else
                         {
