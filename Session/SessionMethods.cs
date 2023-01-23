@@ -106,7 +106,7 @@ namespace StealthSystem
         internal void UpdateEnforcement(StealthSettings settings)
         {
             Enforced = true;
-            Logs.WriteLine($"Enforcement received");
+            Logs.WriteLine($"Config settings loaded");
 
             JumpPenalty = settings.JumpPenalty;
             Transparency = settings.Transparency;
@@ -174,14 +174,15 @@ namespace StealthSystem
         {
             var box = new BoundingBoxD(-obb.HalfExtent, obb.HalfExtent);
             var wm = MatrixD.CreateFromTransformScale(obb.Orientation, obb.Center, Vector3D.One);
-            MySimpleObjectDraw.DrawTransparentBox(ref wm, ref box, ref color, MySimpleObjectRasterizer.Solid, 1);
+            var material = MyStringId.GetOrCompute("Square");
+            MySimpleObjectDraw.DrawTransparentBox(ref wm, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, null, material);
         }
 
         internal static void DrawScaledPoint(Vector3D pos, double radius, Color color, int divideRatio = 20, bool solid = true, float lineWidth = 0.5f)
         {
             var posMatCenterScaled = MatrixD.CreateTranslation(pos);
             var posMatScaler = MatrixD.Rescale(posMatCenterScaled, radius);
-            var material = MyStringId.GetOrCompute("square");
+            var material = MyStringId.GetOrCompute("Square");
             MySimpleObjectDraw.DrawTransparentSphere(ref posMatScaler, 1f, ref color, solid ? MySimpleObjectRasterizer.Solid : MySimpleObjectRasterizer.Wireframe, divideRatio, null, material, lineWidth);
         }
 

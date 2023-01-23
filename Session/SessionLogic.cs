@@ -463,13 +463,10 @@ namespace StealthSystem
                             comp.HeatPercent = 0;
                         }
 
-                        //if (comp.Radiating)
-                        //{
-                        //    DrawBox(comp.DamageBox, Color.Blue);
-                        //    MyAPIGateway.Utilities.ShowNotification($"Drawing {comp.BlockBoxes.Count} block boxes", 16);
-                        //    foreach (var box in comp.BlockBoxes)
-                        //        DrawBox(box, Color.Red);
-                        //}
+                        //DrawBox(comp.DamageBox, Color.OrangeRed);
+
+                        //foreach (var box in comp.BlockBoxes)
+                        //    DrawBox(box, Color.Red);
 
                         if (TickMod20 != comp.CompTick)
                             continue;

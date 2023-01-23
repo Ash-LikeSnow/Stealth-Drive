@@ -34,20 +34,36 @@ namespace StealthSystem
                     StealthSettings xmlData = null;
 
                     try { xmlData = MyAPIGateway.Utilities.SerializeFromXML<StealthSettings>(writer.ReadToEnd()); }
-                    catch (Exception e) { writer.Dispose(); }
+                    catch (Exception ex)
+                    {
+                        writer.Dispose();
+                        Logs.WriteLine($"Exception in SerializeFromXML: {ex}");
+                    }
 
                     writer.Dispose();
 
                     if (xmlData?.Version == CONFIG_VERSION)
                     {
+                        Logs.WriteLine($"Found up to date config file");
+
                         Config = xmlData;
                         CorruptionCheck();
                         SaveConfig();
                     }
                     else
+                    {
+                        var versionStr = xmlData != null ? xmlData.Version.ToString() : "null";
+                        Logs.WriteLine($"Found config file with version {versionStr} : updating to version {CONFIG_VERSION}");
+
                         GenerateConfig(xmlData);
+                    }
                 }
-                else GenerateConfig();
+                else
+                {
+                    Logs.WriteLine($"No config file found, generating...");
+
+                    GenerateConfig();
+                }
 
                 _session.UpdateEnforcement(Config);
             }
@@ -60,7 +76,10 @@ namespace StealthSystem
         private void GenerateConfig(StealthSettings oldSettings = null)
         {
 
-            if (oldSettings != null) RebuildConfig(oldSettings);
+            if (oldSettings != null)
+            {
+                RebuildConfig(oldSettings);
+            }
             else
                 Config = new StealthSettings { Version = CONFIG_VERSION };
 
@@ -71,9 +90,6 @@ namespace StealthSystem
         private void RebuildConfig(StealthSettings oldSettings)
         {
             Config = new StealthSettings { Version = CONFIG_VERSION };
-
-            if (oldSettings == null)
-                return;
 
             var fade = oldSettings.Version < 4;
             var five = oldSettings.Version < 5;
@@ -105,16 +121,31 @@ namespace StealthSystem
         private void CorruptionCheck()
         {
             if (Config.FadeTime < 0)
+            {
                 Config.FadeTime = 210;
+                Logs.WriteLine($"Config error: FadeTime cannot be negative!");
+            }
             if (Config.ShieldDelay < 0)
+            {
                 Config.ShieldDelay = 300;
+                Logs.WriteLine($"Config error: ShieldDelay cannot be negative!");
+            }
             if (Config.JumpPenalty < 0)
+            {
                 Config.JumpPenalty = 180;
+                Logs.WriteLine($"Config error: JumpPenalty cannot be negative!");
+            }
             if (Config.Transparency <= 0)
+            {
                 Config.Transparency = 0.9f;
+                Logs.WriteLine($"Config error: Transparency must be greater than zero!");
+            }
 
             if (Config.WorkInWater == false && Config.WorkOutOfWater == false)
+            {
                 Config.WorkInWater = Config.WorkOutOfWater = true;
+                Logs.WriteLine($"Config error: WorkInWater and WorkOutOfWater cannot both be false!");
+            }
 
             if (Config.DriveConfigs == null || Config.DriveConfigs.Length == 0)
             {
@@ -135,6 +166,7 @@ namespace StealthSystem
                         Duration = 600,
                     },
                 };
+                Logs.WriteLine($"Config error: No Drive configs found, regenerating...");
             }
             else
             {
@@ -143,14 +175,26 @@ namespace StealthSystem
                 {
                     var drive = Config.DriveConfigs[i];
                     if (string.IsNullOrEmpty(drive.Subtype))
+                    {
+                        Logs.WriteLine($"Drive config error: Invalid SubtypeId!");
                         continue;
+                    }
 
                     if (drive.Duration <= 0)
+                    {
                         drive.Duration = 1800;
+                        Logs.WriteLine($"Drive config error ({drive.Subtype}): Duration must be greater than zero!");
+                    }
                     if (drive.PowerScale <= 0f)
+                    {
                         drive.PowerScale = 0.02f;
+                        Logs.WriteLine($"Drive config error ({drive.Subtype}): PowerScale must be greater than zero!");
+                    }
                     if (drive.SignalRangeScale <= 0f)
+                    {
                         drive.SignalRangeScale = 20f;
+                        Logs.WriteLine($"Drive config error ({drive.Subtype}): SignalRangeScale must be greater than zero!");
+                    }
 
                     drives.Add(drive);                        
                 }
@@ -172,6 +216,7 @@ namespace StealthSystem
                         Subtype = "StealthHeatSinkSmall",
                     },
                 };
+                Logs.WriteLine($"Config error: No Heatsink configs found, regenerating...");
             }
             else
             {
@@ -180,12 +225,21 @@ namespace StealthSystem
                 {
                     var sink = Config.SinkConfigs[i];
                     if (string.IsNullOrEmpty(sink.Subtype))
+                    {
+                        Logs.WriteLine($"Heatsink config error: Invalid SubtypeId!");
                         continue;
+                    }
 
                     if (sink.Duration <= 0)
+                    {
                         sink.Duration = 900;
+                        Logs.WriteLine($"Heatsink config error ({sink.Subtype}): Duration must be greater than zero!");
+                    }
                     if (sink.Power <= 0f)
+                    {
                         sink.Power = 10f;
+                        Logs.WriteLine($"Heatsink config error ({sink.Subtype}): Power must be greater than zero!");
+                    }
 
                     sinks.Add(sink);
                 }

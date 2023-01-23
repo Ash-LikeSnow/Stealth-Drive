@@ -203,7 +203,7 @@ namespace StealthSystem
             var matrix = Block.WorldMatrix;
             matrix.Translation += Block.WorldMatrix.Up * offset;
             var obb = new MyOrientedBoundingBoxD(box, matrix);
-            DamageBox = obb;
+            //DamageBox = obb;
 
             var hits = new List<MyEntity>();
             MyGamePruningStructure.GetAllEntitiesInOBB(ref obb, hits);
@@ -233,11 +233,9 @@ namespace StealthSystem
                         MyOrientedBoundingBoxD blockBox;
                         if (fat == null)
                         {
-                            var gridSize = Grid.GridSize;
-                            var aabb = new BoundingBoxD(slim.Min * gridSize - gridSize / 2f, slim.Max * gridSize + gridSize / 2f);
-
-                            var bMatrix = new MatrixD(grid.PositionComp.WorldMatrixRef);
-                            blockBox = new MyOrientedBoundingBoxD(aabb, bMatrix);
+                            var gridSize = (double)Grid.GridSize;
+                            var aabb = new BoundingBoxD(slim.Min * gridSize - gridSize / 2, slim.Max * gridSize + gridSize / 2);
+                            blockBox = new MyOrientedBoundingBoxD(aabb, grid.PositionComp.WorldMatrixRef);
                         }
                         else
                         {
@@ -247,6 +245,7 @@ namespace StealthSystem
                         if (obb.Contains(ref blockBox) != ContainmentType.Disjoint)
                         {
                             slim.DoDamage(500f, MyDamageType.Temperature, true);
+                            //BlockBoxes.Add(blockBox);
                         }
 
                     }
