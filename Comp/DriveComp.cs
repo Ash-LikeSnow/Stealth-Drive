@@ -57,6 +57,7 @@ namespace StealthSystem
         internal bool VisibleToClient;
         internal bool Fading;
         internal bool GridUpdated;
+        internal bool BlocksDirty;
         internal bool PowerDirty;
         internal bool TransferFailed;
         internal bool StealthOnInit;
@@ -364,11 +365,13 @@ namespace StealthSystem
         private void GridSplit(IMyCubeGrid grid1, IMyCubeGrid grid2)
         {
             GridUpdated = true;
+            BlocksDirty = true;
         }
 
         private void BlockAdded(IMySlimBlock slim)
         {
             GridUpdated = true;
+            BlocksDirty = true;
 
             if (StealthActive)
                 DitherBlock(true, slim);
@@ -377,6 +380,7 @@ namespace StealthSystem
         private void BlockRemoved(IMySlimBlock slim)
         {
             GridUpdated = true;
+            BlocksDirty = true;
 
             if (StealthActive)
                 DitherBlock(false, slim);
@@ -770,6 +774,9 @@ namespace StealthSystem
                 {
                     var slim = SlimBlocks[j];
 
+                    if (slim.IsDestroyed)
+                        continue;
+
                     var fatBlock = slim.FatBlock;
                     if (fatBlock == null)
                     {
@@ -787,6 +794,7 @@ namespace StealthSystem
                 }
                 SlimBlocks.Clear();
             }
+            BlocksDirty = false;
         }
 
         internal void FadeBlocks(bool fadeOut, int step)
@@ -799,7 +807,17 @@ namespace StealthSystem
             Fading = step != 0;
 
             for (int i = 0; i < FadeSlims.Count; i++)
-                FadeSlims[i].Dithering = dither;
+            {
+                var slim = FadeSlims[i];
+                if (slim.IsDestroyed)
+                {
+                    FadeSlims.RemoveAtFast(i);
+                    i--;
+                    continue;
+                }
+
+                slim.Dithering = dither;
+            }
 
             for (int i = 0; i < FadeEntities.Count; i++)
             {
@@ -807,11 +825,12 @@ namespace StealthSystem
                 entity.Render.Transparency = dither;
                 entity.Render.UpdateTransparency();
 
-                if (!Fading) //Final step
-                {
-                    if (!fadeOut && entity is MyThrust && _session.HideThrusterFlames)
-                        (entity as MyThrust).Render.UpdateFlameAnimatorData();
-                }
+                if (Fading || fadeOut || entity.Render is MyNullRenderComponent) //Not final step
+                    continue;
+
+                var thrust = entity as MyThrust;
+                if (thrust != null && _session.HideThrusterFlames)
+                    thrust.Render.UpdateFlameAnimatorData();
 
             }
             Grid.Render.UpdateTransparency();
@@ -856,7 +875,8 @@ namespace StealthSystem
 
             if (slim.FatBlock == null)
             {
-                slim.Dithering = dither;
+                if (!slim.IsDestroyed)
+                    slim.Dithering = dither;
                 return;
             }
 

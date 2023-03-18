@@ -58,7 +58,7 @@ namespace StealthSystem
 
                         if (!IsDedicated && comp.Fading)
                         {
-                            if (comp.StealthActive && (gridComp.GroupsDirty || comp.GridUpdated))
+                            if (comp.StealthActive && (gridComp.GroupsDirty || comp.BlocksDirty))
                                 comp.ReCacheBlocks();
 
                             if (comp.Fade-- % FADE_INTERVAL == 0)
