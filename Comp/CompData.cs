@@ -281,7 +281,7 @@ namespace StealthSystem
                 var thisMaster = gridComp.MasterComp;
                 if (thisMaster != null && thisMaster.StealthActive) //Added grid has active drive
                     thisActive = true;
-                else if (((uint)grid.Flags & 0x1000000) > 0) //Added grid is being stealthed by another grid
+                else if (((uint)grid.Flags & StealthSession.IsStealthedFlag) > 0) //Added grid is being stealthed by another grid
                     return;
 
                 var newSubgrids = new List<IMyCubeGrid>();
@@ -296,7 +296,7 @@ namespace StealthSystem
 
                     if (thisActive)
                     {
-                        if (((uint)newSubgrid.Flags & 0x1000000) > 0) continue; //Other grid already stealthed
+                        if (((uint)newSubgrid.Flags & StealthSession.IsStealthedFlag) > 0) continue; //Other grid already stealthed
 
                         newSubgrid.Flags |= _session.StealthFlag;
 
@@ -363,7 +363,7 @@ namespace StealthSystem
                 var thisMaster = gridComp.MasterComp;
                 if (thisMaster != null && thisMaster.StealthActive) //Removed grid has active drive
                     thisActive = true;
-                //else if (((uint)grid.Flags & 0x1000000) > 0)
+                //else if (((uint)grid.Flags & IsStealthedFlag) > 0)
                 //    return;
 
                 var formerSubgrids = new List<IMyCubeGrid>();

@@ -37,6 +37,10 @@ namespace StealthSystem
 
                 else if (mod.PublishedFileId == 2200451495)
                     WaterMod = true;
+
+                else if (mod.PublishedFileId == 1354870812)
+                    RecolourableThrust = true;
+                        
             }
         }
 
@@ -139,7 +143,7 @@ namespace StealthSystem
                 SinkDefinitions[sink.Subtype] = def;
             }
 
-            StealthFlag = (EntityFlags)(DisableWeapons ? 0x1000004 : 0x1000000);
+            StealthFlag = (EntityFlags)(DisableWeapons ? IsStealthedFlag + 4 : IsStealthedFlag);
         }
 
         internal void RemoveEdges()

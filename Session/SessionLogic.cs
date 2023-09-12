@@ -11,7 +11,6 @@ namespace StealthSystem
 {
     public partial class StealthSession
     {
-
         internal void CompLoop()
         {
             //var position = MyAPIGateway.Session.LocalHumanPlayer?.Character?.PositionComp.WorldAABB.Center ?? MyAPIGateway.Session?.Camera?.Position;
@@ -226,13 +225,13 @@ namespace StealthSystem
                                     var target = turret.Target;
 
                                     var block = target as IMyCubeBlock;
-                                    if (block != null && ((uint)block.CubeGrid.Flags & 0x1000000) > 0)
+                                    if (block != null && ((uint)block.CubeGrid.Flags & IsStealthedFlag) > 0)
                                     {
                                         turret.ResetTargetingToDefault();
                                         continue;
                                     }
 
-                                    if (((uint)target.Flags & 0x1000000) > 0)
+                                    if (((uint)target.Flags & IsStealthedFlag) > 0)
                                         turret.ResetTargetingToDefault();
                                 }
                             }
@@ -268,7 +267,7 @@ namespace StealthSystem
                                 comp.TotalTime = comp.MaxDuration;
                                 comp.TimeElapsed = 0;
 
-                                //comp.Grid.Flags |= (EntityFlags)0x1000000;
+                                //comp.Grid.Flags |= (EntityFlags)IsStealthedFlag;
 
                                 comp.Sink.Update();
 
@@ -306,7 +305,7 @@ namespace StealthSystem
                                 //comp.TotalTime = comp.TimeElapsed;
                                 //comp.TimeElapsed = 0;
 
-                                //comp.Grid.Flags ^= (EntityFlags)0x1000000;
+                                //comp.Grid.Flags ^= (EntityFlags)IsStealthedFlag;
 
                                 comp.Sink.Update();
 

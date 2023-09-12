@@ -92,7 +92,7 @@ namespace StealthSystem
             var grid = info.HitEntity as IMyCubeGrid;
             if (grid == null) return;
 
-            Logs.WriteLine($"Grid: {grid.DisplayName} - has flag: {((uint)grid.Flags & 0x1000000) > 0}");
+            Logs.WriteLine($"Grid: {grid.DisplayName} - has flag: {((uint)grid.Flags & StealthSession.IsStealthedFlag) > 0}");
         }
     }
 }

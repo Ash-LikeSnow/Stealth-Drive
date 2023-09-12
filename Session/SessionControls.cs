@@ -200,9 +200,19 @@ namespace StealthSystem
             }
 
             if (!comp.Online || !comp.SufficientPower || comp.CoolingDown || comp.StealthActive || !comp.GridComp.WaterValid)
+            {
+                var status = !comp.Online ? "Drive Offline"
+                    : !comp.SufficientPower ? "Insufficient Power"
+                    : comp.CoolingDown ? $"Drive Cooling Down - {comp.TimeElapsed / 60}s Remaining"
+                    : comp.StealthActive ? "Drive Already Engaged"
+                    : !comp.GridComp.WaterValid ? WorkInWater ? "Drive not Submerged"
+                    : "Drive Submerged" : "";
+                MyAPIGateway.Utilities.ShowNotification(status, 2000, "Red");
                 return;
+            }
 
             comp.EnterStealth = true;
+            MyAPIGateway.Utilities.ShowNotification($"Engaging Stealth - {comp.TotalTime / 60}s Remaining", 2000, "Green");
 
             foreach (var control in _customControls)
                 control.UpdateVisual();
@@ -218,8 +228,9 @@ namespace StealthSystem
             }
 
             if (!comp.Online || !comp.StealthActive) return;
-
+            
             comp.ExitStealth = true;
+            MyAPIGateway.Utilities.ShowNotification($"Disengaging Stealth - {comp.TimeElapsed / 60}s Cooldown", 2000, "StealthOrange");
 
             foreach (var control in _customControls)
                 control.UpdateVisual();

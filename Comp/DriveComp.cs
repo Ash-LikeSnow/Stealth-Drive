@@ -14,6 +14,7 @@ using Sandbox.Game.EntityComponents;
 using System.Text;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using System.Collections.Concurrent;
+using Sandbox.ModAPI.Interfaces;
 
 namespace StealthSystem
 {
@@ -657,10 +658,24 @@ namespace StealthSystem
 
         internal bool ToggleStealth(bool force = false)
         {
-            if (!Online || !StealthActive && !force && (!SufficientPower || CoolingDown || !GridComp.WaterValid)) return false;
+            if (!Online || !StealthActive && !force && (!SufficientPower || CoolingDown || !GridComp.WaterValid))
+            {
+                var status = !Online ? "Drive Offline"
+                    : !SufficientPower ? "Insufficient Power"
+                    : CoolingDown ? $"Drive Cooling Down - {TimeElapsed / 60}s Remaining"
+                    : !GridComp.WaterValid ? _session.WorkInWater ? "Drive not Submerged"
+                    : "Drive Submerged" : "";
+                MyAPIGateway.Utilities.ShowNotification(status, 2000, "Red");
+
+                return false;
+            }
 
             EnterStealth = !StealthActive;
             ExitStealth = StealthActive;
+
+            var message = EnterStealth ? $"Engaging Stealth - {TotalTime / 60}s Remaining" : $"Disengaging Stealth - {TimeElapsed / 60}s Cooldown";
+            var colour = EnterStealth ? "Green" : "StealthOrange";
+            MyAPIGateway.Utilities.ShowNotification(message, 2000, colour);
 
             IgnorePower = force && EnterStealth;
 
@@ -710,19 +725,31 @@ namespace StealthSystem
                         var thrust = (MyThrust)fatBlock;
                         if (stealth)
                         {
-                            var def = thrust.BlockDefinition;
-                            var flameIdle = def.FlameIdleColor;
-                            var flameFull = def.FlameFullColor;
+                            if (_session.RecolourableThrust)
+                                (thrust as Sandbox.ModAPI.Ingame.IMyTerminalBlock).GetProperty("HideThrustFlames").AsBool().SetValue(fatBlock, true);
+                            else
+                            {
+                                var def = thrust.BlockDefinition;
+                                var flameIdle = def.FlameIdleColor;
+                                var flameFull = def.FlameFullColor;
 
-                            def.FlameIdleColor = Vector4.Zero;
-                            def.FlameFullColor = Vector4.Zero;
-                            thrust.Render.UpdateFlameAnimatorData();
+                                def.FlameIdleColor = Vector4.Zero;
+                                def.FlameFullColor = Vector4.Zero;
+                                thrust.Render.UpdateFlameAnimatorData();
 
-                            def.FlameIdleColor = flameIdle;
-                            def.FlameFullColor = flameFull;
+                                def.FlameIdleColor = flameIdle;
+                                def.FlameFullColor = flameFull;
+                            }
+
                         }
                         else if (!fade)
-                            thrust.Render.UpdateFlameAnimatorData();
+                        {
+                            if (_session.RecolourableThrust)
+                                (thrust as Sandbox.ModAPI.Ingame.IMyTerminalBlock).GetProperty("HideThrustFlames").AsBool().SetValue(fatBlock, false);
+                            else
+                                thrust.Render.UpdateFlameAnimatorData();
+                        }
+
                     }
 
                     if (fade) FadeEntities.Add(fatBlock);
@@ -830,7 +857,12 @@ namespace StealthSystem
 
                 var thrust = entity as MyThrust;
                 if (thrust != null && _session.HideThrusterFlames)
-                    thrust.Render.UpdateFlameAnimatorData();
+                {
+                    if (_session.RecolourableThrust)
+                        (thrust as Sandbox.ModAPI.Ingame.IMyTerminalBlock).GetProperty("HideThrustFlames").AsBool().SetValue(thrust, false);
+                    else
+                        thrust.Render.UpdateFlameAnimatorData();
+                }
 
             }
             Grid.Render.UpdateTransparency();

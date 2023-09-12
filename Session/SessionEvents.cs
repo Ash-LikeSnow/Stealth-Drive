@@ -38,7 +38,10 @@ namespace StealthSystem
                 }
 
                 if (!PbApiInited && IsServer && entity is IMyProgrammableBlock)
+                {
                     MyAPIGateway.Utilities.InvokeOnGameThread(() => API.PbInit());
+                    PbApiInited = true;
+                }
             }
             catch (Exception ex)
             {

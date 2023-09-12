@@ -20,6 +20,7 @@ namespace StealthSystem
         internal const string RADIANT_EMISSIVE = "Emissive0";
 
         internal const int FADE_INTERVAL = 5;
+        internal const int IsStealthedFlag = 0x20000000;
 
         internal readonly Dictionary<string, Definitions.DriveDefinition> DriveDefinitions = new Dictionary<string, Definitions.DriveDefinition>();
         internal readonly Dictionary<string, Definitions.SinkDefinition> SinkDefinitions = new Dictionary<string, Definitions.SinkDefinition>();
@@ -86,6 +87,7 @@ namespace StealthSystem
 
         internal bool WcActive;
         internal bool WaterMod;
+        internal bool RecolourableThrust;
 
         internal readonly ConcurrentDictionary<long, WaterData> WaterMap = new ConcurrentDictionary<long, WaterData>();
         internal readonly ConcurrentDictionary<long, MyPlanet> PlanetMap = new ConcurrentDictionary<long, MyPlanet>();
