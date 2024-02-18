@@ -295,6 +295,8 @@ namespace StealthSystem
                             else if (comp.ExitStealth)
                             {
                                 exit = true;
+                                Logs.WriteLine($"Exiting stealth: {comp.IsPrimary} {comp.Online} {gridComp.Revealed} {gridComp.WaterValid} {TrackDamage && gridComp.DamageTaken > DamageThreshold}" +
+                                    $" {comp.SufficientPower} {comp.TimeElapsed} / {comp.TotalTime}");
 
                                 comp.ExitStealth = false;
                                 comp.StealthActive = false;

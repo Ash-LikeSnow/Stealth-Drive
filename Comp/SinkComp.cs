@@ -98,8 +98,11 @@ namespace StealthSystem
 
         internal void Close()
         {
-            var gridData = _session.GridMap[Grid];
-            gridData.HeatComps.Remove(this);
+            GridComp gridComp;
+            if (_session.GridMap.TryGetValue(Grid, out gridComp))
+            {
+                gridComp.HeatComps.Remove(this);
+            }
 
             //Block.IsWorkingChanged -= IsWorkingChanged;
 

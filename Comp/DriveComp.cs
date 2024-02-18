@@ -190,8 +190,11 @@ namespace StealthSystem
             
             _session.DriveMap.Remove(Block.EntityId);
 
-            var gridData = _session.GridMap[Grid];
-            gridData.StealthComps.Remove(this);
+            GridComp gridComp;
+            if (_session.GridMap.TryGetValue(Grid, out gridComp))
+            {
+                gridComp.StealthComps.Remove(this);
+            }
 
             Grid.OnGridSplit -= GridSplit;
             Grid.OnBlockAdded -= BlockAdded;
