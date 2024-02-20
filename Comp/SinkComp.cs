@@ -12,6 +12,7 @@ using Sandbox.Game.EntityComponents;
 using System.Text;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using VRage.Game.ModAPI.Interfaces;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace StealthSystem
 {
@@ -134,7 +135,7 @@ namespace StealthSystem
         private void AppendingCustomData(IMyTerminalBlock block, StringBuilder builder)
         {
             var status = !Working ? "Offline" : !SufficientPower ? "Insufficient Power" : Radiating ? "Venting ඞ" : Accumulating ? "Accumulating Heat" : "Ready";
-            
+
             builder.Append("Heat Sink Status: ")
                 .Append(status)
                 .Append("\n")
@@ -185,7 +186,7 @@ namespace StealthSystem
         internal void SetEmissiveColor()
         {
             if (Radiating)
-                Block.SetEmissiveParts(StealthSession.RADIANT_EMISSIVE, Color.DarkRed, HeatPercent/200);
+                Block.SetEmissiveParts(StealthSession.RADIANT_EMISSIVE, Color.DarkRed, HeatPercent / 200);
 
             var emissiveColor = !Block.IsFunctional ? Color.Black : !Working ? EmissiveValues.RED : Accumulating ? Color.Cyan : Radiating ? Color.OrangeRed : EmissiveValues.GREEN;
             if (emissiveColor == OldColour)
@@ -219,7 +220,10 @@ namespace StealthSystem
                 var dest = ent as IMyDestroyableObject;
                 if (dest != null)
                 {
-                    dest.DoDamage(9f, MyDamageType.Temperature, true);
+                    var entObb = new MyOrientedBoundingBoxD(ent.PositionComp.LocalAABB, ent.PositionComp.WorldMatrixRef);
+                    if (entObb.Contains(ref obb) != ContainmentType.Disjoint)
+                        dest.DoDamage(9f, MyDamageType.Temperature, true);
+
                     continue;
                 }
 
@@ -277,7 +281,7 @@ namespace StealthSystem
                 Sink.Init(MyStringHash.GetOrCompute("Utility"), sinkInfo);
                 (Block as MyCubeBlock).Components.Add(Sink);
             }
-            
+
             Source = Grid.ResourceDistributor as MyResourceDistributorComponent;
             if (Source != null)
                 Source.AddSink(Sink);
